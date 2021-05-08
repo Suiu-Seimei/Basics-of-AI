@@ -1,0 +1,55 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-5_幾何分布(p=0.2/0.5/0.7)
+#*************************************************
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 確率質量関数
+def fGeometric(p, k):
+    return  p * ((1-p)**(k-1))
+
+# パラメータに応じた分布計算
+n = 7
+p1 = 0.2
+p2 = 0.5
+p3 = 0.7
+Xlist = range(n+1)
+Llist = range(n+1)
+Plist1 = []
+Plist2 = []
+Plist3 = []
+for x in Xlist:
+    Plist1.append( fGeometric(p1, x) )
+for x in Xlist:
+    Plist2.append( fGeometric(p2, x) )
+for x in Xlist:
+    Plist3.append( fGeometric(p3, x) )
+
+# グラフ描画
+plt.figure(figsize=(15, 3))
+
+plt.subplot(1, 3, 1)
+plt.title('Geometric distribution')
+plt.bar(Xlist, Plist1, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='(p=0.2)')
+plt.legend(loc='upper right')
+plt.ylim(0, 2.5)
+
+plt.subplot(1, 3, 2)
+plt.title('Geometric distribution')
+plt.bar(Xlist, Plist2, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='(p=0.5)')
+plt.legend(loc='upper right')
+plt.ylim(0, 2.5)
+
+plt.subplot(1, 3, 3)
+plt.title('Geometric distribution')
+plt.bar(Xlist, Plist3, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='(p=0.7)')
+plt.legend(loc='upper right')
+plt.ylim(0, 2.5)
+
+plt.show()

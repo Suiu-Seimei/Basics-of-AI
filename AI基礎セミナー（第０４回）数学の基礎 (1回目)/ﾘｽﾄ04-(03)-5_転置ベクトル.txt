@@ -1,0 +1,18 @@
+#*************************************************
+# ﾘｽﾄ04-(03)-5_転置ベクトル
+#*************************************************
+import numpy as np
+
+print("縦ベクトル a とその転置ベクトル a.T")
+a = np.array([[11],[12],[13]])
+print('type(a)=', type(a))
+print('a=', a)
+print('type(a.T)=', type(a.T))
+print('a.T=', a.T)
+
+print("\n横べクトル b とその転置ベクトル b.T")
+b = np.array([[21,22,23]])
+print('type(b)=', type(b))
+print('b=', b)
+print('type(b.T)=', type(b.T))
+print('b.T=', b.T)

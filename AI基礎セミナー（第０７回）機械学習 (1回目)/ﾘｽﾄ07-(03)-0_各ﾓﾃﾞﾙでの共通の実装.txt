@@ -1,0 +1,278 @@
+#********************************************************************/
+# ﾘｽﾄ07-(03)-0_各ﾓﾃﾞﾙでの共通の実装
+#********************************************************************/
+# 参照ライブラリ
+import numpy as np
+import matplotlib.pyplot as plt
+from keras.datasets  import  mnist
+from keras.utils import np_utils
+from PIL import Image
+import io
+
+#********************************************************************/
+# print_MNIST_attr                                                  */
+# MNIST データセットの属性を表示する関数                            */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   titleList : 表示用タイトルのリスト                              */
+#               (0:全体用、1～4：xtrain,ytrain,xtest,ytest用)       */
+#   xtrain    : モデル作成用データ：説明変数                        */
+#   ytrain    : モデル作成用データ：出力結果                        */
+#   xtest     : モデル検証用データ：説明変数                        */
+#   ytest     : モデル検証用データ：出力結果                        */
+#-------------------------------------------------------------------*/
+# 戻り値：なし                                                      */
+#********************************************************************/
+def print_MNIST_attr(titleList, xtrain, ytrain, xtest, ytest):
+    print(titleList[0])
+    print("  {0}.dtype={1}".format(titleList[1], xtrain.dtype))
+    print("  {0}.shape={1}".format(titleList[1], xtrain.shape))
+    print("  {0}.range={1}～{2}".format(titleList[1], np.amin(xtrain), np.amax(xtrain)))
+    print("")
+    print("  {0}.dtype={1}".format(titleList[2], ytrain.dtype))
+    print("  {0}.shape={1}".format(titleList[2], ytrain.shape))
+    print("  {0}.range={1}～{2}".format(titleList[2], np.amin(ytrain), np.amax(ytrain)))
+    print("")
+    print("  {0}.shape={1}".format(titleList[3], xtest.shape))
+    print("  {0}.shape={1}".format(titleList[4], ytest.shape))
+
+#********************************************************************/
+# plot_learning_curve                                               */
+# エポック回数に沿ったモデル学習の学習状況を、グラフ表示する関数    */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   hist : モデル学習時の履歴情報 (Sequential.fit メソッドの戻り値) */
+#   epochNo : エポック回数                                          */
+#-------------------------------------------------------------------*/
+# 戻り値：なし                                                      */
+#********************************************************************/
+def plot_learning_curve( hist, epochNo ):
+    # print("history.keys={0}\n".format(hist.history.keys()))    
+    
+    epochVal = range(1, epochNo+1)
+
+    plt.figure(1, figsize=(10, 4))
+    plt.subplots_adjust(wspace=0.5)
+
+    plt.subplot(1, 2, 1)
+    plt.plot(epochVal, hist.history['loss'], label='training', color='black')
+    plt.plot(epochVal, hist.history['val_loss'], label='test', color='cornflowerblue')
+    plt.ylim(0, 10)
+    plt.legend()
+    plt.grid()
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochVal, hist.history['accuracy'], label='training', color='black')
+    plt.plot(epochVal, hist.history['val_accuracy'],label='test', color='cornflowerblue')
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.grid()
+    plt.xlabel('epoch')
+    plt.ylabel('acc')
+
+    plt.show()
+
+#********************************************************************/
+# pred_by_model                                                     */
+# 作成したモデルで入力画像を分類する関数                            */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   predModel : 予測モデル (Sequential)                             */
+#   inputData : 予測するデータ (予測モデル用のデータ型にしたもの)   */
+#-------------------------------------------------------------------*/
+# 戻り値：                                                          */
+#   predData  : 予測結果のデータ (float32 (入力画像枚数,10))        */
+#               入力画像の各クラス(0～9)への所属確率[0～1]を表す    */
+#   predClass : 予測結果のデータ (uint8 (入力画像枚数))             */
+#               入力画像の所属確率が最大のクラス                    */
+#********************************************************************/
+def pred_by_model(predModel, inputData):
+    # 入力画像の各クラスへの所属確率
+    predData = predModel.predict(inputData)
+    
+    # 入力画像の所属確率が最大のクラス
+    predClass = np.zeros(predData.shape[0], dtype=np.uint8)
+    for i in range(predData.shape[0]):
+        predClass[i] = np.argmax(predData[i, :])
+
+    return predData, predClass
+
+#********************************************************************/
+# show_result_images                                                */
+# 作成したモデルで入力画像を分類した結果を表示する関数（その１）    */
+# 入力画像の所属クラスを画像とともに表示する。                      */
+# 引数で教師データ「teacherClass」が「None」以外で指定されていて、  */
+# 分類結果が教師データと異なる場合、画像の上側に赤でバーを表示する。*/
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   inputData   : 入力画像 (float32 (入力画像枚数,*))               */
+#                 (*：モデルによりデータ型は異なる)                 */
+#   predClass   : 分類結果のデータ (uint8 (入力画像枚数))           */
+#                 入力画像の所属確率が最大のクラス                  */
+#   teacherClass: 教師データ (uint8 (入力画像枚数))                 */
+#                 入力画像が表す数値（0～9）、None指定可能          */
+#   imgSizeX    : 入力画像のサイズ X                                */
+#   imgSizeY    : 入力画像のサイズ Y                                */
+#   n_showMax   : 結果表示する入力画像数の最大枚数                  */
+#-------------------------------------------------------------------*/
+# 戻り値：なし                                                      */
+#********************************************************************/
+def show_result_images(inputData, predClass, teacherClass, imgSizeX, imgSizeY, n_showMax):
+    dispN = np.amin( [inputData.shape[0], n_showMax] )
+    dispX = 10
+    dispY = np.int( (dispN + dispX - 1) / dispX )
+    
+    plt.figure(1, figsize=(2.8*dispX, 2.8*dispY))
+    plt.subplots_adjust(wspace=0.1, hspace=0.1)
+    plt.gray()
+    for i in range(dispN):
+        g = plt.subplot(dispY, dispX, i + 1)
+        x = inputData[i, :]
+        x = x.reshape(imgSizeY, imgSizeX)
+        plt.pcolor(1 - x)
+        
+        dispcolor = "black"
+        if (teacherClass is not None) and \
+           (predClass[i] != teacherClass[i]):
+            dispcolor = "red"
+            plt.text(1.0, 4.5, "NG!", fontsize=25, color=dispcolor)
+
+        plt.text(22, 25.5, "%d" % predClass[i], fontsize=20, color=dispcolor)
+        plt.xticks([], "")
+        plt.yticks([], "")
+        plt.xlim(0, imgSizeX-1)
+        plt.ylim(imgSizeY-1, 0)
+    plt.show()
+
+#********************************************************************/
+# show_result_probability                                           */
+# 作成したモデルで入力画像を分類した結果を表示する関数（その２）    */
+# 入力画像の各クラスへの所属確率[0～１]を表示する。                 */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   inputData   : 入力画像 (float32 (入力画像枚数,*))               */
+#                 (*：モデルによりデータ型は異なる)                 */
+#   predData    : 予測結果のデータ (float32 (入力画像枚数,10))      */
+#                 入力画像の各クラス(0～9)への所属確率[0～１]を表す */
+#   n_showMax   : 結果表示する入力画像数の最大枚数                  */
+#-------------------------------------------------------------------*/
+# 戻り値：なし                                                      */
+#********************************************************************/
+def show_result_probability(inputData, predData, n_showMax):
+    dispN = np.amin( [inputData.shape[0], n_showMax] )
+    for i in range(dispN):
+        print("(class,probability) ", end="")
+        for j in range(predData.shape[1]):
+            print("{0}:{1:.2f}  ".format(j, predData[i, j]), end="")
+    print("")
+
+#********************************************************************/
+# pred_test_and_show_result                                         */
+# 引数で指定したモデルで入力画像を分類し、                          */
+# 分類結果を最初の指定枚数分について表示する。                      */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   predModel   : 分類モデル                                        */
+#   inputData   : 入力画像 (float32 (入力画像枚数,*))               */
+#                 (*：モデルによりデータ型は異なる)                 */
+#   teacherClass: 教師データ (uint8 (入力画像枚数))                 */
+#                 入力画像が表す数値（0～9）                        */
+#   imgSizeX    : 入力画像のサイズ X                                */
+#   imgSizeY    : 入力画像のサイズ Y                                */
+#   n_showMax   : 結果表示する入力画像数の最大枚数                  */
+#-------------------------------------------------------------------*/
+# 戻り値： なし                                                     */
+#********************************************************************/
+def pred_test_and_show_result(predModel, inputData, teacherClass, 
+                              imgSizeX, imgSizeY, n_showMax):
+    predData, predClass = pred_by_model(predModel, inputData)
+    show_result_images(inputData, predClass, teacherClass, 
+                              imgSizeX, imgSizeY, n_showMax)
+
+#********************************************************************/
+# pred_myData_and_show_result                                       */
+# モデルとモデル用のデータ変換用関数を引数で指定し、                */
+# 自作データで分類結果を表示する。                                  */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   title             : 表示用タイトル                              */
+#   predModel         : 分類モデル                                  */
+#   reshape_for_model : モデル用のデータ変換用関数                  */
+#-------------------------------------------------------------------*/
+# 戻り値： なし                                                     */
+#********************************************************************/
+def pred_myData_and_show_result(title, predModel, reshape_for_model):
+    # 読み込む画像ファイル情報(ファイルパス、分類クラス)のリスト
+    fileInfoList = [['Handwritten_0.bmp',0],
+                    ['Handwritten_1.bmp',1],
+                    ['Handwritten_2.bmp',2],
+                    ['Handwritten_3.bmp',3],
+                    ['Handwritten_4.bmp',4],
+                    ['Handwritten_5.bmp',5],
+                    ['Handwritten_6.bmp',6],
+                    ['Handwritten_7.bmp',7],
+                    ['Handwritten_8.bmp',8],
+                    ['Handwritten_9.bmp',9]]
+
+    # タイトルを表示
+    print(title)
+
+    # 画像ファイル毎に読み込んで分類する
+    totalimage = 0
+    okimage = 0
+    for fileInfo in fileInfoList:
+        filePath = imageFolderPath + '/' + fileInfo[0]
+        fileLabel = fileInfo[1]
+        print("filePath={0}, label={1}".format(filePath, fileLabel))
+
+        # 画像ファイルを読み込み
+        with open(filePath, 'rb') as f:
+            data = f.read()
+        inputImg = Image.open(io.BytesIO(data))
+
+        # 予測モデルに合うようにデータ変換
+        inputImgArray = np.asarray(inputImg)
+        inputImgArray = inputImgArray.reshape(1, inputImgArray.shape[0], inputImgArray.shape[1])
+        inputLabel = [fileLabel]
+        inputX, inputY = reshape_for_model(inputImgArray, inputLabel)
+
+        # 予測モデルで分類し、その結果を表示
+        predData, predClass = pred_by_model(predModel, inputX)
+        print("predData.dtype={0}, shape={1}, range={2}～{3}"
+              .format(predData.dtype, predData.shape, 
+                      np.amin(predData), np.amax(predData)))
+        show_result_probability(inputX, predData, 1)
+        show_result_images(inputX, predClass, inputLabel, IMG_SIZE_X, IMG_SIZE_Y, 1)
+
+        # 予測モデルで分類した結果と、期待される結果が等しいかを判定
+        totalimage = totalimage + 1
+        if inputLabel[0] == predClass[0]:
+            okimage = okimage + 1
+
+    # 分類の集計結果
+    if totalimage > 0 :
+        print("Total images={0}, OK images={1}, accuracy={2:.2f}".format(
+            totalimage, okimage, okimage/totalimage ))
+    else:
+        print("Total images={0}".format(totalimage))
+
+
+#********************************************************************/
+# MNIST データセットをロードする
+#  (1) x_train：入力画像：uint8（入力画像枚数,28,28) 
+#  (2) y_train：入力画像が表す数値（0～9）：uint8（入力画像枚数) 
+#  (3) x_test：検証用画像：uint8（入力画像枚数,28,28) 
+#  (4) y_test：検証用画像が表す数値（0～9）：uint8（入力画像枚数) 
+#********************************************************************/
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+IMG_SIZE_Y = x_train.shape[1]   # 画像サイズ(Y方向)
+IMG_SIZE_X = x_train.shape[2]   # 画像サイズ(X方向)
+IMG_GRAY_LEVEL = 255            # 画像の諧調の最大値(モノクロ256諧調)
+IMG_CLASS_NO = 10               # 画像の分類クラス数(0～9 の10クラス)
+
+titleList = ["loaded ...", "x_train", "y_train", "x_test", "y_test"]
+print_MNIST_attr(titleList, x_train, y_train, x_test, y_test)
+

@@ -1,0 +1,249 @@
+#***********************************************************************
+# ﾘｽﾄ10-(03)-2_Scikit-learn Iris data の K-means 法によるｸﾗｽﾀ分解その1
+# ----------------------------------------------------------------------
+# ｸﾗｽﾀｰの中心ﾍﾞｸﾄﾙμの初期値を、各特徴量の平均-σ,±0,+σで初期化
+#***********************************************************************
+from sklearn import datasets
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# display range
+DISP_MIN = 0
+DISP_MAX = 8
+
+#************************************************************************/
+# fPlotCluster                                                          */
+# 分布を表示する                                                        */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   N       :ﾃﾞｰﾀ総数                                                   */
+#   K       :ｸﾗｽﾀｰ総数                                                  */  
+#   Mu[,]   :ｸﾗｽﾀの中心座標 [k,d] (k=0～K-1:ｸﾗｽﾀ添字、d=0～D-1:特徴量添字)*/
+#   Rmtrx[,]:ｸﾗｽ指示変数 [n,k] (n=0～N-1:ﾃﾞｰﾀ添字、k=0～K-1:ｸﾗｽﾀ添字)   */
+#   iris_dt :Irisﾃﾞｰﾀ                                                   */
+#-----------------------------------------------------------------------*/
+# 戻り値：  なし                                                        */
+#************************************************************************/
+def fPlotCluster(N, K, Mu, Rmtrx, iris_dt):
+    # plot Iris data
+    axislist = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]
+    collist = ['cornflowerblue', 'red', 'yellow']
+    mrklist = ['o', '^', 'o']
+
+    plt.figure(figsize=(15, 10))
+
+    # 座標の組み合わせ毎に表示
+    for xy in range(0,len(axislist)):
+        plt.subplot(2,3, xy+1)
+        axisX = axislist[xy][0]
+        axisY = axislist[xy][1]
+
+        # 各ﾃﾞｰﾀをﾌﾟﾛｯﾄ
+        for n in range(0, N):
+            k = np.argmax(Rmtrx[n,:])
+            plt.plot(iris_dt.data[n, axisX], 
+                     iris_dt.data[n, axisY], 
+                     mrklist[k], linestyle='None', 
+                     markeredgecolor='black', color=collist[k])
+
+        # 各ｸﾗｽﾀｰ中心をﾌﾟﾛｯﾄ
+        for k in range(0, K):
+            plt.plot(Mu[k, axisX], 
+                     Mu[k, axisY], 
+                     '*', linestyle='None', markersize=15,
+                     markeredgecolor=collist[k], color='orange')
+
+        plt.xlim(DISP_MIN, DISP_MAX)
+        plt.ylim(DISP_MIN, DISP_MAX)
+        plt.xlabel(iris_dt.feature_names[axisX])
+        plt.ylabel(iris_dt.feature_names[axisY])
+        plt.grid(True)
+
+    plt.show()
+
+#************************************************************************/
+# fPlotJhistory                                                         */
+# 「歪み尺度」の時系列を表示                                            */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   Jhist  :「歪み尺度」の履歴  Jhist[j] (j=0～jmax:履歴添字)           */
+#   jmax   :「歪み尺度」の履歴の最終 添字                               */
+#-----------------------------------------------------------------------*/
+# 戻り値：  なし                                                        */
+#************************************************************************/
+def fPlotJhistory(Jhist, jmax):
+    # 横軸
+    jstep = np.zeros(jmax+1)
+    for t in range(0, len(jstep)):
+        jstep[t] = t
+
+    # 縦軸表示範囲
+    yrange = np.max(Jhist[:jmax+1]) - np.min(Jhist[:jmax+1])
+    ymin = np.min(Jhist[:jmax+1]) - yrange * 0.1
+    ymax = np.max(Jhist[:jmax+1]) + yrange * 0.1
+        
+    # 表示      
+    plt.figure(figsize=(15, 3))
+    plt.title("Learning Curve (history of distortion measure)")
+    plt.plot(jstep, Jhist[:jmax+1], marker='o', linestyle='-',
+             markeredgecolor='black', color='cornflowerblue')
+    plt.xlim(0, jmax)
+    plt.ylim(ymin, ymax)
+    plt.xlabel("step")
+    plt.ylabel("distortion measure")
+    plt.grid(True)
+    plt.show()
+    return
+   
+#************************************************************************/
+# fStepR                                                                */
+# 各ﾃﾞｰﾀの所属ｸﾗｽﾀｰを決定し、ｸﾗｽ指示変数に格納する。                    */
+# 同時に歪み尺度を計算する。                                            */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   N    :ﾃﾞｰﾀ総数                                                      */
+#   K    :ｸﾗｽﾀｰ総数                                                     */
+#   D    :特徴量ﾃﾞｰﾀの種類数(次元)                                      */ 
+#   Mu   :ｸﾗｽﾀの中心座標 Mu[k,d] (k=0～K-1:ｸﾗｽﾀ添字、d=0～D-1:特徴量添字)*/
+#   data :特徴量ﾃﾞｰﾀ data[n,d] (n=0～N-1:ﾃﾞｰﾀ添字、d=0～D-1:特徴量添字) */ 
+#-----------------------------------------------------------------------*/
+# 戻り値:                                                               */
+#  (1) 計算しなおしたｸﾗｽ指示変数                                        */
+#          Rnew[n,k] (n=0～N-1:ﾃﾞｰﾀ添字、k=0～K-1:ｸﾗｽﾀ添字)             */
+#  (2) 計算しなおした「歪み尺度」Jnew                                   */
+#************************************************************************/
+def fStepR(N, K, D, Mu, data):
+    # ｸﾗｽ指示変数、歪み尺度
+    Rnew = np.zeros((N,K))
+    Jnew = 0
+
+    # 各ﾃﾞｰﾀ毎に繰り返し
+    for n in range(0, N):
+        wk = np.zeros(K)
+
+        # 各ｸﾗｽﾀｰ中心からの距離の二乗
+        for k in range(0, K):
+            for d in range(0, D):
+                Jpart = (data[n, d] - Mu[k, d])**2
+                wk[k] = wk[k] + Jpart
+                Jnew = Jnew + Jpart
+
+        # 最寄りのｸﾗｽﾀｰに所属させる
+        Rnew[n, np.argmin(wk)] = 1
+
+    return Rnew, Jnew
+    
+#************************************************************************/
+# fStepMu                                                               */
+# 各ｸﾗｽﾀｰ中心を所属ﾃﾞｰﾀから更新する                                     */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   N    :ﾃﾞｰﾀ総数                                                      */
+#   K    :ｸﾗｽﾀｰ総数                                                     */
+#   D    :特徴量ﾃﾞｰﾀの種類数(次元)                                      */ 
+#   R    :ｸﾗｽ指示変数 R[n,k] (n=0～N-1:ﾃﾞｰﾀ添字、k=0～K-1:ｸﾗｽﾀ添字)     */
+#   data :特徴量ﾃﾞｰﾀ data[n,d] (n=0～N-1:ﾃﾞｰﾀ添字、d=0～D-1:特徴量添字) */ 
+#-----------------------------------------------------------------------*/
+# 戻り値：   計算しなおしたｸﾗｽﾀの中心座標                               */
+#            Munew[k,d] (k=0～K-1:ｸﾗｽﾀ添字、d=0～D-1:特徴量添字)        */
+#************************************************************************/
+def fStepMu(N, K, D, R, data):
+    Munew = np.zeros((K, D))
+    for k in range(0, K):
+        for d in range(0, D):
+            Munew[k,d] = np.sum(R[:,k] * data[:,d]) / np.sum(R[:,k])
+
+    return Munew
+
+#************************************************************************/
+# 本体処理                                                              */
+#************************************************************************/
+
+#------------------------------------------------------------------------
+# Iris ﾃﾞｰﾀをﾛｰﾄﾞし、想定するｸﾗｽﾀ数Kを与えます
+#------------------------------------------------------------------------
+iris_dt = datasets.load_iris()
+data = iris_dt.data
+N = len(iris_dt.target)
+
+# 想定するｸﾗｽﾀｰ数
+K = 3
+
+# 特徴量の種類(次元数）
+D = len(iris_dt.feature_names)
+
+#------------------------------------------------------------------------
+# (手順1：初期設定) 中心ﾍﾞｸﾄﾙμ、ｸﾗｽ指示変数R
+#------------------------------------------------------------------------
+#  ｸﾗｽﾀｰの中心ﾍﾞｸﾄﾙμの初期化（各特徴量の平均-σ,±0,+σで初期化）
+Mu = np.zeros([K,D])
+Msigma = np.zeros(D)
+Mmean = np.zeros(D) 
+for d in range(0,D):
+    Mmean[d] = np.mean(iris_dt.data[:, d])
+    Msigma[d] = np.std(iris_dt.data[:, d])
+    for k in range(0,K):
+        Mu[k][d] = Mmean[d] + Msigma[d] * (k+1-int((K+1)/2))
+
+#  各ﾃﾞｰﾀの所属ｸﾗｽﾀを初期化(全て1番目のｸﾗｽﾀｰに所属、ｸﾗｽ指示変数Rで表現)
+R = np.zeros((N,K), dtype=np.int)
+for n in range(0,N):
+    R[n][1] = 1
+
+# 各ｸﾗｽﾀｰ中心と、各ﾃﾞｰﾀの分布を表示（初期状態）
+fPlotCluster(N, K, Mu, R, iris_dt)
+
+#------------------------------------------------------------------------
+# 収束条件を満たすまで繰り返す
+#------------------------------------------------------------------------
+# 最大繰り返し回数
+REPT_MAX = 200
+
+# 「損失関数 (歪み尺度)」の履歴と減少率の境界値
+LOSS_LIMIT = 0.00001  # 直前の損失関数値との差異の割合がこれ以下になったら収束とみなす
+Jhist = np.zeros(REPT_MAX)
+jmax = 0
+
+# 最大で max_rep 回繰り返し
+for j in range(0,REPT_MAX):
+
+    # 各ｸﾗｽﾀｰ中心と、各ﾃﾞｰﾀの分布を表示 
+    print( "ｽﾃｯﾌﾟ={0} ------------------------".format(j))
+    if( j == REPT_MAX-1 ):
+        print( "最大繰り返し回数に達したので処理終了。")
+        break
+
+    # 各ﾃﾞｰﾀの所属ｸﾗｽﾀｰ(ｸﾗｽ指示変数R)を更新する 
+    Rnew, Jnew = fStepR(N, K, D, Mu, iris_dt.data)
+    Jhist[j] = Jnew
+    
+    # 損失関数値の減少が殆どなくなったら処理終了
+    if( Jhist[j] == 0):
+        print( "損失関数値が０になったので処理終了。")
+        break
+    elif( j >= 1 ):
+        lossDiff = abs((Jhist[j] - Jhist[j-1]) / Jhist[j-1])
+        if(lossDiff < LOSS_LIMIT):
+            print( "損失関数値の減少が殆どなくなったので処理終了。")
+            break     
+
+    # 所属ｸﾗｽﾀｰに変更が無かったら処理終了
+    if( (Rnew == R).all() ):
+        print( "所属ｸﾗｽﾀｰに変更が無かったので処理終了。")
+        fPlotCluster(N, K, Mu, R, iris_dt)
+        break
+    R = Rnew
+
+    # 各ｸﾗｽﾀｰ中心(中心ﾍﾞｸﾄﾙμ)を所属ﾃﾞｰﾀから更新する   
+    Munew = fStepMu(N, K, D, R, iris_dt.data)
+
+    # 各ｸﾗｽﾀｰ中心に変更が無かったら処理終了
+    if( (Munew == Mu).all() ):
+        print( "各ｸﾗｽﾀｰ中心に変更が無かったので処理終了。")
+        fPlotCluster(N, K, Mu, R, iris_dt)
+        break
+    Mu = Munew
+
+#「歪み尺度」の時系列を表示
+fPlotJhistory(Jhist, j)

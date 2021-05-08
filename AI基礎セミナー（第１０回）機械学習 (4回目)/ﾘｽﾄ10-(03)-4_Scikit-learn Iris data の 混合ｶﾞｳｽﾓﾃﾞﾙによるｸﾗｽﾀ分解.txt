@@ -1,0 +1,497 @@
+#***********************************************************************
+# ﾘｽﾄ10-(03)-4_Scikit-learn Iris data の 混合ｶﾞｳｽﾓﾃﾞﾙによるｸﾗｽﾀ分解
+#***********************************************************************
+from sklearn import datasets
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# display range
+DISP_MIN = 0
+DISP_MAX = 8
+
+# 分布表示の為の一辺あたりの格子点数
+MESH_NO = 40
+
+#-----------------------------------------------------------------------*/
+# (添え字についての説明)                                                */
+#   k=0～K-1:ｸﾗｽﾀ添字 (K:ｸﾗｽﾀｰ総数)                                     */
+#   d=0～D-1:特徴量添字  (D:ﾃﾞｰﾀの次元数)                               */
+#   n=0～N-1:ﾃﾞｰﾀ添字  (N:ﾃﾞｰﾀ総数)                                     */
+#-----------------------------------------------------------------------*/
+
+#************************************************************************/
+# fGauss                                                                */
+# 多変量ガウス関数（多変量正規分布）                                    */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   x[,]      :ﾃﾞｰﾀ：x[n,d]                                             */ 
+#   muk[]     :着目ｸﾗｽﾀｰの中心座標μk：mu[d]                            */ 
+#   sigmak[,] :着目ｸﾗｽﾀｰの共分散行列Σk：sigmak[d,d]                    */ 
+#-----------------------------------------------------------------------*/
+# 戻り値:                                                               */
+#  (1) ガウス関数の値                                                   */
+#************************************************************************/
+def fGauss(x, muk, sigmak):
+    N, D = x.shape
+
+    # マハラノビス距離（Mahalanobis' Distance）の2乗計算
+    invSigmak = np.linalg.inv(sigmak)
+    xMinusMu = x - muk
+    xMuDotInvS = np.dot(xMinusMu, invSigmak)
+    xMDist2 = np.zeros(N)
+    for d in range(D):
+        xMDist2 = xMDist2 + xMuDotInvS[:,d] * xMinusMu[:,d] 
+        
+    # 多変量ガウス関数の値
+    fact1 = 1 / np.sqrt(((2*np.pi)**D) * np.linalg.det(sigmak))
+    p = fact1 * np.exp(- xMDist2 / 2)
+    return p
+   
+#************************************************************************/
+# fMixGauss                                                             */
+# 多変量混合ガウス関数                                                  */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#  x         :ﾃﾞｰﾀ：x[n,d]                                              */
+#  piList    :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]                       */
+#  muList    :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]                     */
+#  sigmaList :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]              */ 
+#-----------------------------------------------------------------------*/
+# 戻り値:                                                               */
+#  (1) 混合ガウス関数の値  p[n,k]                                       */
+#************************************************************************/
+def fMixGauss(x, piList, muList, sigmaList):
+    N, D = x.shape
+    K = len(piList)
+    p = np.zeros((N,K))
+                
+    for k in range(K):
+        p[:,k] = p[:,k] + piList[k] * fGauss(x, muList[k,:], sigmaList[k,:,:])
+    return p
+
+#************************************************************************/
+# fLossFunction                                                         */
+# 混合ガウスﾓﾃﾞﾙの損失関数 (対数尤度に-1を掛けたもの)                   */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#  x         :ﾃﾞｰﾀ：x[n,d]                                              */
+#  piList    :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]                       */
+#  muList    :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]                     */
+#  sigmaList :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]              */ 
+#-----------------------------------------------------------------------*/
+# 戻り値:                                                               */
+#  (1) 混合ガウスﾓﾃﾞﾙの損失関数の値                                     */
+#************************************************************************/
+def fLossFunction(x, piList, muList, sigmaList):
+    N, D = x.shape
+    K = len(piList)
+
+    # 混合ｶﾞｳｽ分布での各点での確率
+    y = np.zeros((N,K))
+    for k in range(K):
+        y[:,k] = fGauss(x, muList[k,:], sigmaList[k,:,:])
+
+    # 対数尤度
+    logLikelihood = 0
+    for n in range(N):
+        wk = 0
+        for k in range(K):
+            wk = wk + piList[k] * y[n,k]
+        logLikelihood = logLikelihood + np.log(wk)
+    
+    # 誤差関数
+    loss = - logLikelihood
+    return loss
+
+#************************************************************************/
+# fEStep                                                                */
+# 現時点でのπ、μ、Σを用いて、負担率γを計算する。                    */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#  x[,]          :ﾃﾞｰﾀ：x[n,d]                                          */
+#  piList[]      :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]                   */
+#  muList[,]     :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]                 */
+#  sigmaList[,,] :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]          */ 
+#-----------------------------------------------------------------------*/
+# 戻り値:                                                               */
+#  (1) 負担率γ[n,k]　　　　　　　　　　　　　　　                      */
+#************************************************************************/
+def fEStep(x, piList, muList, sigmaList):
+    # ﾃﾞｰﾀのｻｲｽﾞ情報
+    N, D = x.shape
+    K = len(piList)
+
+    # 負担率γ
+    Gnew = np.zeros((N,K))
+
+    # 各ﾃﾞｰﾀの混合ｶﾞｳｽﾓﾃﾞﾙの分布関数値
+    p = fMixGauss(x, piList, muList, sigmaList)
+    
+    # 各ﾃﾞｰﾀ毎に負担率γを算出
+    for n in range(0, N):
+        wk = np.zeros(K)
+        for k in range(0, K):
+            wk[k] = p[n,k]
+        Gnew[n, :] = wk / np.sum(wk)
+
+    return Gnew
+
+#************************************************************************/
+# fMStep                                                                */
+# 現時点での負担率γを用いて、πk、μk、Σkを計算する。                 */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#  x[,]          :ﾃﾞｰﾀ：x[n,d]                                          */
+#  gammaList[,]  :負担率：γ[n,k]　　　　　　　　　　　　　　　         */
+#-----------------------------------------------------------------------*/
+# 戻り値:                                                               */
+#  (1) piList[]      :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]               */
+#  (2) muList[,]     :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]             */
+#  (3) sigmaList[,,] :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]      */ 
+#************************************************************************/
+def fMStep(x, gammaList):
+    # ﾃﾞｰﾀのｻｲｽﾞ情報
+    N, D = x.shape
+    N, K = gammaList.shape
+
+    # 負担率の総和 Rk を計算
+    rkList = np.zeros(K)
+    for k in range(0, K):
+        for n in range(0, N):
+            rkList[k] = rkList[k] + gammaList[n,k]
+    
+    # 混合係数πk を更新
+    piList = np.zeros(K)
+    for k in range(0, K):
+        piList[k] = rkList[k] / N
+
+    # 中心ﾍﾞｸﾄﾙμk を更新
+    muList = np.zeros((K,D))
+    for k in range(0, K):
+        for n in range(0, N):
+            muList[k,:] =  muList[k,:] + (gammaList[n,k] * x[n,:])
+        muList[k,:] = muList[k,:] / rkList[k]
+    
+    # 共分散行列∑k を更新    
+    sigmaList = np.zeros((K,D,D))
+    wk = np.zeros((1,D))
+    for k in range(0, K):
+        for n in range(0, N):
+            for d in range(0,D):
+                wk[0,:] = x[n,:] - muList[k,:]
+            sigmaList[k,:,:] = sigmaList[k,:,:] + (gammaList[n,k] * np.dot(wk.T,wk))
+        sigmaList[k,:,:] = sigmaList[k,:,:] / rkList[k]    
+ 
+    return piList, muList, sigmaList
+
+#************************************************************************/
+# fPlotLossHistory                                                      */
+# 損失関数値 (対数尤度に-1を掛けたもの)の時系列を表示                   */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   lossHist :「損失関数値」の履歴  lossHist[j] (j=0～histMax:履歴添字) */
+#   hmax     :「損失関数値」の履歴の最終 添字                           */
+#-----------------------------------------------------------------------*/
+# 戻り値：  なし                                                        */
+#************************************************************************/
+def fPlotLossHistory(lossHist, hmax):
+    # 横軸
+    jstep = np.zeros(hmax+1)
+    for t in range(0, len(jstep)):
+        jstep[t] = t
+
+    # 縦軸表示範囲
+    yrange = np.max(lossHist[:hmax+1]) - np.min(lossHist[:hmax+1])
+    ymin = np.min(lossHist[:hmax+1]) - yrange * 0.1
+    ymax = np.max(lossHist[:hmax+1]) + yrange * 0.1
+        
+    # 表示      
+    plt.figure(figsize=(15, 3))
+    plt.title("Learning Curve (history of loss function)")
+    plt.plot(jstep, lossHist[:hmax+1], marker='o', linestyle='-',
+             markeredgecolor='black', color='cornflowerblue')
+    plt.xlim(0, hmax)
+    plt.ylim(ymin, ymax)
+    plt.xlabel("step")
+    plt.ylabel("loss function")
+    plt.grid(True)
+    plt.show()
+    return
+
+#************************************************************************/
+# fGetMeshGauss                                                         */
+# 混合ガウス分布の格子点上の値を得る                                    */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   K             :ｸﾗｽﾀｰ総数                                            */  
+#   D             :ﾃﾞｰﾀの次元数                                         */
+#   piList[]      :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]                  */
+#   muList[,]     :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]                */
+#   sigmaList[,,] :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]         */
+#   xn            :輪郭表示時のﾌﾟﾛｯﾄ数 (表示範囲を分割する個数)         */
+#-----------------------------------------------------------------------*/
+# 戻り値：                                                              */
+# (1) xcoord     :輪郭表示時の格子点座標値(1次元) xcoord(xn)            */
+# (2) xmeshGauss :格子点座標での混合ｶﾞｳｽ分布の値(4次元) xmeshGauss(xn,xn,xn,xn) */
+#************************************************************************/
+def fGetMeshGauss(K, D, piList, muList, sigmaList, xn):
+
+    # 表示ﾒｯｼｭの格子点座標の値
+    xcoord = np.linspace(DISP_MIN, DISP_MAX, xn)
+
+    # 4次元の格子点座標
+    xmeshNN = np.zeros((xn,xn,xn,xn,D))
+    for x3 in range(xn):
+        for x2 in range(xn):
+            for x1 in range(xn):
+                for x0 in range(xn):
+                    xmeshNN[x3,x2,x1,x0, 3] = xcoord[x3]
+                    xmeshNN[x3,x2,x1,x0, 2] = xcoord[x2]
+                    xmeshNN[x3,x2,x1,x0, 1] = xcoord[x1]
+                    xmeshNN[x3,x2,x1,x0, 0] = xcoord[x0]
+
+    # 4次元の格子点座標での混合ｶﾞｳｽ分布の合成値
+    xmeshNN = xmeshNN.reshape((xn*xn*xn*xn,D))
+    xmeshGaussK = fMixGauss(xmeshNN, piList, muList, sigmaList)
+    
+    # ｸﾗｽﾀｰ分の混合ｶﾞｳｽ分布の合成
+    xmeshGauss = np.zeros((xn*xn*xn*xn))
+    for n in range(xn*xn*xn*xn):
+        for k in range(K):
+            xmeshGauss[n] = xmeshGauss[n] + xmeshGaussK[n,k]
+
+    # 格子点での混合ｶﾞｳｽ分布の合成値
+    xmeshGauss = xmeshGauss.reshape((xn,xn,xn,xn))
+    
+    return xcoord, xmeshGauss
+
+#************************************************************************/
+# fPlotMixGaussContour                                                  */
+# 混合ガウス分布の輪郭線を描画する                                      */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   plt        :ﾌﾟﾛｯﾄｵﾌﾞｼﾞｪｸﾄ                                           */
+#   xn         :輪郭表示時のﾌﾟﾛｯﾄ数 (表示範囲を分割する個数)            */
+#   xcoord     :輪郭表示時の格子点座標値(1次元) xcoord(xn)              */
+#   xmeshGauss :格子点座標での混合ｶﾞｳｽ分布の値(4次元) xmeshGauss(xn,xn,xn,xn) */
+#   axisX      :輪郭表示時のX軸の次元番号 (0～D-1)                      */
+#   axisY      :輪郭表示時のY軸の次元番号 (0～D-1)                      */
+#-----------------------------------------------------------------------*/
+# 戻り値：  なし                                                        */
+#************************************************************************/
+def fPlotMixGaussContour(plt, xn, xcoord, xmeshGauss, axisX, axisY):
+
+    # 着目平面への射影 (Z-buffering)
+    xplaneGauss = np.zeros((xn,xn))
+    for yi in range(xn):
+        for xi in range(xn):
+            for z1i in range(xn):
+                for z2i in range(xn):
+                    xadd = 0.0
+                    if( (axisX==0) and (axisY==1) ):
+                        xadd = xmeshGauss[z1i,z2i,yi,xi]
+                    elif( (axisX==0) and (axisY==2) ):
+                        xadd = xmeshGauss[z1i,yi,z2i,xi]
+                    elif( (axisX==0) and (axisY==3) ):
+                        xadd = xmeshGauss[yi,z1i,z2i,xi]
+                    elif( (axisX==1) and (axisY==2) ):
+                        xadd = xmeshGauss[z1i,yi,xi,z2i]
+                    elif( (axisX==1) and (axisY==3) ):
+                        xadd = xmeshGauss[yi,z1i,xi,z2i]
+                    elif( (axisX==2) and (axisY==3) ):
+                        xadd = xmeshGauss[yi,xi,z1i,z2i]
+
+                    xplaneGauss[yi,xi] = xplaneGauss[yi,xi] + xadd
+    
+    # 表等高線表示
+    plt.contour(xcoord, xcoord, xplaneGauss, 10, colors='gray')
+    return 
+
+#************************************************************************/
+# fDPlotAdnDraw                                                         */
+# 各点をプロットし、混合ガウス分布の輪郭線を描画する                    */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   N             :ﾃﾞｰﾀ総数                                             */
+#   K             :ｸﾗｽﾀｰ総数                                            */  
+#   D             :ﾃﾞｰﾀの次元数                                         */
+#   piList[]      :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]                  */
+#   muList[,]     :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]                */
+#   sigmaList[,,] :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]         */
+#   gamma[,]      :負担率：γ[n,k]　　　　　　　　　　　　　　　        */
+#-----------------------------------------------------------------------*/
+# 戻り値：  なし                                                        */
+#************************************************************************/
+def fDPlotAdnDraw(N, K, D, piList, muList, sigmaList, gamma):
+    # plot Iris data
+    axislist = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]
+    collist = ['cornflowerblue', 'red', 'yellow']
+    mrklist = ['o', '^', 'o']
+
+    plt.figure(figsize=(15, 10))
+    
+    # 格子点での混合ｶﾞｳｽ分布の値
+    xcoord, xmeshGauss = fGetMeshGauss(K, D, piList, muList, sigmaList, MESH_NO)
+
+    # 座標の組み合わせ毎に表示
+    for xy in range(0,len(axislist)):
+        plt.subplot(2,3, xy+1)
+        axisX = axislist[xy][0]
+        axisY = axislist[xy][1]
+
+        # 混合ｶﾞｳｽ分布の輪郭を描画
+        fPlotMixGaussContour(plt, MESH_NO, xcoord, xmeshGauss, axisX, axisY)
+
+        # 各ﾃﾞｰﾀをﾌﾟﾛｯﾄ
+        for n in range(0, N):
+            k = np.argmax(gamma[n,:])
+            plt.plot(iris_dt.data[n, axisX], 
+                     iris_dt.data[n, axisY], 
+                     mrklist[k], linestyle='None', 
+                     markeredgecolor='black', color=collist[k])
+
+        # 各ｸﾗｽﾀｰ中心をﾌﾟﾛｯﾄ
+        for k in range(0, K):
+            plt.plot(muList[k, axisX], 
+                     muList[k, axisY], 
+                     '*', linestyle='None', markersize=15,
+                     markeredgecolor=collist[k], color='orange')
+
+        plt.xlim(DISP_MIN, DISP_MAX)
+        plt.ylim(DISP_MIN, DISP_MAX)
+        plt.xlabel(iris_dt.feature_names[axisX])
+        plt.ylabel(iris_dt.feature_names[axisY])
+        plt.grid(True)
+
+    plt.show()
+
+#************************************************************************/
+# fPrintMixGaussModelInfo                                               */
+# 混合ガウス分布のﾓﾃﾞﾙ情報を印字する                                    */
+#-----------------------------------------------------------------------*/
+# 引数：                                                                */
+#   K             :ｸﾗｽﾀｰ数                                              */
+#   D             :説明変数の次元                                       */
+#   piList[]      :全ｸﾗｽﾀの混合係数πkのﾘｽﾄ：piList[k]                  */
+#   muList[,]     :全ｸﾗｽﾀの中心座標μkのﾘｽﾄ：muList[k,d]                */
+#   sigmaList[,,] :全ｸﾗｽﾀの共分散行列Σkのﾘｽﾄ：sigmaList[k,d,d]         */
+#-----------------------------------------------------------------------*/
+# 戻り値：  なし                                                        */
+#************************************************************************/
+def fPrintMixGaussModelInfo(K, D, piList, muList, sigmaList):
+    print("混合ガウス分布のﾓﾃﾞﾙ情報 ----------------")
+    print("　・ｸﾗｽﾀｰ数　　　  ＝{0}".format(K))
+    print("　・説明変数の次元 ＝{0}".format(D))
+    print("　・混合係数 πk　 ＝{0}".format(piList))
+    print("　・中心座標 μk   ＝\r\n{0}".format(muList))
+    print("　・共分散行列 Σk ＝\r\n{0}".format(sigmaList))
+
+
+#************************************************************************/
+# 本体処理                                                              */
+#************************************************************************/
+
+#------------------------------------------------------------------------
+# Iris ﾃﾞｰﾀをﾛｰﾄﾞし、想定するｸﾗｽﾀ数Kを与えます
+#------------------------------------------------------------------------
+# load Iris data
+iris_dt = datasets.load_iris()
+X = iris_dt.data
+N, D = X.shape
+K = 3   # 想定するｸﾗｽﾀｰ数
+
+#------------------------------------------------------------------------
+# (手順1：初期設定) 混合係数π、中心ﾍﾞｸﾄﾙμ、共分散行列Σ、負担率γ
+#------------------------------------------------------------------------
+# ｶﾞｳｽ分布の混合係数の初期化
+PiList = np.array([0.33, 0.33, 0.34])
+
+# k番目のｶﾞｳｽ分布Ｎkの中心ﾍﾞｸﾄﾙμの初期化（特徴量平均-σ,±0,+σで初期化）
+MuList = np.ones([K,D])
+Msigma = np.zeros(D)
+Mmean = np.zeros(D) 
+for d in range(0,D):
+    Mmean[d] = np.mean(iris_dt.data[:, d])
+    Msigma[d] = np.std(iris_dt.data[:, d])
+    for k in range(0,K):
+        MuList[k][d] = Mmean[d] + Msigma[d] * (k+1-int((K+1)/2))
+
+# k番目のｶﾞｳｽ分布Ｎkの共分散行列∑kの初期化
+# （説明変数が4個なので、4×4の単位行列をｸﾗｽﾀｰ数分作成して初期化）
+SigmaList = np.array([
+    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],
+    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],
+    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]])
+
+# 負担率γを初期化（ｸﾗｽﾀｰ数分）
+GammaList = np.c_[np.ones((N,1)), np.zeros((N,2))]
+
+# 各ｸﾗｽﾀｰ中心と、各ﾃﾞｰﾀの分布を表示（初期状態）
+fPrintMixGaussModelInfo(K, D, PiList, MuList, SigmaList)
+fDPlotAdnDraw(N, K, D, PiList, MuList, SigmaList, GammaList)
+
+#------------------------------------------------------------------------
+# E Step, M Step を収束するまで、または最大回数に達するまで繰り返す
+#------------------------------------------------------------------------
+# 最大繰り返し回数
+REPT_MAX = 200
+
+# 「損失関数」の履歴と減少率の境界値
+LOSS_LIMIT = 0.00001  # 直前の損失関数値との差異の割合がこれ以下になったら収束とみなす
+lossHist = np.zeros(REPT_MAX)
+hmax = 0
+
+for j in range(0,REPT_MAX):
+    print( "ｽﾃｯﾌﾟ={0} ------------------------".format(j))
+    if( j == REPT_MAX-1 ):
+        print( "最大繰り返し回数に達したので処理終了。")
+        break
+
+    #--------------------------------------------------------------------
+    # 現時点でのπ、μ、Σから損失関数値を計算
+    #--------------------------------------------------------------------
+    hmax = j
+    lossHist[j] = fLossFunction(X, PiList, MuList, SigmaList)
+    if( lossHist[j] == 0):
+        print( "損失関数値が０になったので処理終了。")
+        break
+    elif( j >= 1 ):
+        lossDiff = abs((lossHist[j] - lossHist[j-1]) / lossHist[j-1])
+        if(lossDiff < LOSS_LIMIT):
+            print( "損失関数値の減少が殆どなくなったので処理終了。")
+            break     
+
+    #--------------------------------------------------------------------
+    # (手順2：E Step) 現時点でのπ、μ、Σを用いて、負担率γを計算
+    #--------------------------------------------------------------------
+    GammaNew = fEStep(X, PiList, MuList, SigmaList)
+    if( (GammaList == GammaNew).all() ):
+        print( "負担率γに変更が無かったので処理終了。")
+        break
+    else:
+        GammaList = GammaNew
+
+    #--------------------------------------------------------------------
+    # (手順3：M Step) 現時点での負担率γを用いて、π、μ、Σを計算
+    #--------------------------------------------------------------------
+    PiListNew, MuListNew, SigmaListNew = fMStep(X, GammaNew)
+    if( (PiList == PiListNew).all() and
+        (MuList == MuListNew).all() and
+        (SigmaList == SigmaListNew).all() ) :
+        print( "混合係数π、中心ﾍﾞｸﾄﾙμ、共分散行列Σに変更が無かったので処理終了。")
+        break 
+    else:
+        PiList = PiListNew
+        MuList = MuListNew
+        SigmaList = SigmaListNew
+
+#------------------------------------------------------------------------
+# 終了時処理
+#------------------------------------------------------------------------
+# 各ｸﾗｽﾀｰ中心と、各ﾃﾞｰﾀの分布を表示（終了時）
+fPrintMixGaussModelInfo(K, D, PiList, MuList, SigmaList)
+fDPlotAdnDraw(N, K, D, PiList, MuList, SigmaList, GammaList)
+
+# 「損失関数」の履歴を表示
+fPlotLossHistory(lossHist, hmax)

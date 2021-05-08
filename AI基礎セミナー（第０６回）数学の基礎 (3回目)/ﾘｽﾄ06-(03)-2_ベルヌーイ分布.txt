@@ -1,0 +1,29 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-2_ベルヌーイ分布
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# ベルヌーイ分布関数
+def fBernoulli(p,k):
+    return ((p)**k) * ((1-p)**(1-k))
+
+# パラメータに応じた分布計算
+n = 2
+p = 0.3
+Xlist = range(n)
+Llist = []
+Plist = []
+for x in Xlist:
+    Llist.append(x)
+    Plist.append( fBernoulli(p, x) )
+
+# グラフ描画
+plt.figure(figsize=(3, 3))
+plt.title('Bernoulli distribution')
+plt.bar(Xlist, Plist, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='p=0.3')
+plt.legend(loc='upper right')
+plt.show()

@@ -1,0 +1,20 @@
+#*********************************************************
+#  ﾘｽﾄ03-(07)-1_フォーマット済み文字列リテラル
+#*********************************************************
+import decimal
+import datetime  as dt
+
+name = "Fred"
+print( f"He said his name is {name!r}." )
+
+width = 10
+precision = 4
+value = decimal.Decimal("12.34567")
+print( f"result: {value:{width}.{precision}}" )
+
+today = dt.datetime(year=2017, month=1, day=27)
+print( f"{today:%B %d, %Y}" )
+
+number = 1024
+print( f"{number:#0x}" )
+

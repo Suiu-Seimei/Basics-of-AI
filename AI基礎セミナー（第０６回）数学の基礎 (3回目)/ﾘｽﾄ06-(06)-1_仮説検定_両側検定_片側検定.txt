@@ -1,0 +1,61 @@
+#*************************************************
+# ﾘｽﾄ06-(06)-1_仮説検定_両側検定_片側検定
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# ガウス分布関数
+def gauss(xlist, mu, sigma):
+    return (1 / (np.sqrt(2 * np.pi) * sigma))\
+            * np.exp(-(xlist - mu)**2 / (2 * sigma**2))
+
+# データとグリッド
+xn = 100
+xlist = np.linspace(-4, 4, xn)
+mu = 0
+sigma = 1
+
+# 臨界値 (±1.96σ)
+fiveper = 1.96
+cv1xlist = np.array([ fiveper, fiveper ])
+cv1ylist = gauss(cv1xlist, mu, sigma)
+cv1ylist[0] = 0
+cv2xlist = np.array([ -fiveper, -fiveper ])
+cv2ylist = gauss(cv2xlist, mu, sigma)
+cv2ylist[0] = 0
+
+# グラフ描画
+plt.figure(figsize=(15, 3))
+
+# 分布曲線と臨界値（両側検定）
+plt.subplot(1, 2, 1)
+plt.plot( xlist, gauss(xlist, mu, sigma), 'cornflowerblue', linewidth=3,\
+         label='two-sided test' )
+plt.plot( cv1xlist, cv1ylist, color='black', linestyle='--', linewidth=2 )
+plt.plot( cv2xlist, cv2ylist, color='black', linestyle='--', linewidth=2 )
+
+plt.title('Hypothesis testing  (two-sided)')
+plt.legend(loc='lower center')
+plt.ylim(-0.1, 0.5)
+plt.xlim(-4, 4)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+
+# 分布曲線（片側検定）
+plt.subplot(1, 2, 2)
+plt.plot( xlist, gauss(xlist, mu, sigma), 'cornflowerblue', linewidth=3,\
+         label='one-sided test' )
+plt.plot( cv1xlist, cv1ylist, color='black', linestyle='--', linewidth=2 )
+
+plt.title('Hypothesis testing  (one-sided)')
+plt.legend(loc='lower center')
+plt.ylim(-0.1, 0.5)
+plt.xlim(-4, 4)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+
+plt.show()

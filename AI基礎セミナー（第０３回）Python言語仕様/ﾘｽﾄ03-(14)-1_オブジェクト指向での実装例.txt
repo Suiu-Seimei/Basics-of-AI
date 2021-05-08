@@ -1,0 +1,40 @@
+#*************************************************************************
+#  ﾘｽﾄ03-(04)-3_オブジェクト指向での実装例
+#*************************************************************************
+# クラス定義 -------------------------------------------------------------
+class AirPlane :
+    # クラス変数
+    clsName = "飛翔体のクラス"
+
+    # コンストラクタ */
+    def  __init__( self, name, kind ):
+        # インスタンス変数
+        self.myName = name
+        self.myWingKind = kind
+
+    # インスタンスメソッド
+    def  Introduce(self, prefix, postfix):
+        print(prefix, self.myName, postfix, self.myWingKind, '型の飛翔体', postfix)
+
+    # クラスメソッド
+    @classmethod
+    def  IntroduceClass(self):
+        print('このクラスは', AirPlane.clsName, 'です。')
+
+# 呼出し側 ------------------------------------------------------------
+
+# クラスのインスタンスを作成
+plane01 = AirPlane("スーパーマン", "宇宙人");
+plane02 = AirPlane("ゼロ戦", "単葉機");
+plane03 = AirPlane("スパイダーマン", "超人");
+
+# インスタンスメソッド呼び出し
+plane01.Introduce("吾輩は", "である。")
+plane02.Introduce("私は", "です。")
+plane03.Introduce("我は", "であるぞ。")
+
+# クラス変数のアクセス
+print( 'クラス名＝', AirPlane.clsName )
+ 
+# クラスメソッド呼び出し
+AirPlane.IntroduceClass()

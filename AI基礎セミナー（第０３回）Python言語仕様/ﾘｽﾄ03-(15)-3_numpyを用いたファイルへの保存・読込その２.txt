@@ -1,0 +1,23 @@
+#********************************************************
+#  ﾘｽﾄ03-(15)-3_numpyを用いたファイルへの保存・読込その２
+#********************************************************
+import numpy as np
+
+data1 = np.array([11, 12, 13])
+data2 = np.array([21, 22, 23])
+
+# ﾃﾞｰﾀの保存
+np.savez('datafile2.npz', data1=data1, data2=data2)
+# ﾃﾞｰﾀの消去
+data1 = []
+data2 = []
+print('消去後 data1：', data1)
+print('消去後 data2：', data2)
+
+# ﾃﾞｰﾀの読込
+outfile = np.load('datafile2.npz')
+print('読込後 files：', outfile.files) # 格納データの表示
+data1 = outfile['data1'] # data1 の取り出し
+data2 = outfile['data2'] # data2 の取り出し
+print('読込後 data1：', data1)
+print('読込後 data2：', data2)

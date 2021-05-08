@@ -1,0 +1,45 @@
+#*************************************************
+# ﾘｽﾄ06-(05)-2_相関係数
+#*************************************************
+import numpy as np
+
+# 相関係数の計算（numpy 使用版）
+def fCorr1(xlist, ylist):
+    xycorr = np.corrcoef(xlist, ylist)[0, 1]
+    return xycorr
+
+# 相関係数の計算（numpy 不使用版で、式のとおりに計算）
+def fCorr2(xlist, ylist):
+    xm = np.mean(xlist)
+    ym = np.mean(ylist)
+    xs= np.std(xlist)
+    ys= np.std(ylist)
+    n = len(xlist)
+    exy = 0
+    for i in range(n):
+        exy += xlist[i]*ylist[i]/n
+    covxy = exy - (xm * ym)
+    xycorr = covxy / (xs * ys)
+    return xycorr
+
+# (2000～2019) 経済成長率(日本)
+X_list = [ 2.78, 0.41, 0.12, 1.53, 2.21, 1.66, 1.42, 1.65, -1.09, -5.42, 
+           4.19, -0.12, 1.50, 2.00, 0.38, 1.22, 0.52, 2.17, 0.28, 0.67 ]
+
+# (2000～2019) 完全失業率(全国) 
+Y_list = [ 4.7, 5.0, 5.4, 5.3, 4.7, 4.4, 4.1, 3.9, 4.0, 5.1, 
+           5.1, 4.5, 4.3, 4.0, 3.6, 3.4, 3.1, 2.8, 2.4, 2.4 ]
+
+# 標準偏差と相関係数を計算
+X_mean = np.mean(X_list)
+Y_mean = np.mean(Y_list)
+X_std= np.std(X_list)
+Y_std= np.std(Y_list)
+xycorr1 = fCorr1(X_list, Y_list)
+xycorr2 = fCorr2(X_list, Y_list)
+
+print(f"2000年～2019年 (標本数={len(Y_list)!r})")
+print(f"  完全失業率(全国平均) 平均＝{Y_mean:.2f}, 標準偏差＝{Y_std:.2f}") 
+print(f"  経済成長率(日本)　　 平均＝{X_mean:.2f}, 標準偏差＝{X_std:.2f}")
+print(f"  完全失業率(全国平均)と経済成長率(日本)の相関係数(Numpy 　使用) ＝{xycorr1:.5f}")
+print(f"  完全失業率(全国平均)と経済成長率(日本)の相関係数(Numpy 不使用) ＝{xycorr2:.5f}")

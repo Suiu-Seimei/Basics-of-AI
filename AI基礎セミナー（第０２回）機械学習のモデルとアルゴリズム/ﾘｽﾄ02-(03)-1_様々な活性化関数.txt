@@ -1,0 +1,70 @@
+#*************************************************************************
+# （ﾘｽﾄ 02-(3)-1）
+#  様々な活性化関数
+#*************************************************************************
+import matplotlib.pyplot as plt
+import numpy as np
+
+# RelU
+def fRelU(xlist):
+    ylist = np.zeros(xlist.size)
+    for i in range(xlist.size):
+        ylist[i] = max(0.0, xlist[i])
+    return  ylist
+
+# Relu6
+def fRelU6(xlist):
+    ylist = np.zeros(xlist.size)
+    for i in range(xlist.size):
+        ylist[i] = min(max(0.0, xlist[i]), 6.0)
+    return  ylist
+
+# sigmoid
+def fSigmoid(xlist):
+    return 1.0 / (1 + np.exp(-1.0 * xlist))
+
+# tanh
+def fTanh(xlist):
+    return (np.exp(xlist) - np.exp(-xlist)) / (np.exp(xlist) + np.exp(-xlist))
+
+# softsign
+def fSoftsign(xlist):
+    return xlist / (abs(xlist) + 1.0)
+
+# softplus
+def fSoftplus(xlist):
+    return np.log(np.exp(xlist) + 1.0)
+
+# ELU
+def fELU(xlist, alpha):
+    return np.where(xlist>0.0, xlist, alpha*(np.exp(xlist) - 1))
+
+
+# 定義域
+x_vals = np.linspace(start=-10., stop=10., num=100)
+
+# 関数値
+y_relu = fRelU(x_vals)
+y_relu6 = fRelU6(x_vals)
+y_sigmoid = fSigmoid(x_vals)
+y_tanh = fTanh(x_vals)
+y_softsign = fSoftsign(x_vals)
+y_softplus = fSoftplus(x_vals)
+y_elu = fELU(x_vals,1.0)
+
+# ｸﾞﾗﾌ表示１
+plt.plot(x_vals, y_relu, 'b:', label='4.ReLU', linewidth=2)
+plt.plot(x_vals, y_softplus, 'r--', label='7.softplus', linewidth=2)
+plt.plot(x_vals, y_relu6, 'g-.', label='6.ReLU6', linewidth=2)
+plt.plot(x_vals, y_elu, 'k-', label='8.ELU', linewidth=0.5)
+plt.ylim([-1.5,7])
+plt.legend(loc='upper left')
+plt.show()
+
+# ｸﾞﾗﾌ表示２
+plt.plot(x_vals, y_sigmoid, 'r--', label='1.sigmoid', linewidth=2)
+plt.plot(x_vals, y_tanh, 'b:', label='2.tanh', linewidth=2)
+plt.plot(x_vals, y_softsign, 'g-.', label='3.softsign', linewidth=2)
+plt.ylim([-2,2])
+plt.legend(loc='upper left')
+plt.show()

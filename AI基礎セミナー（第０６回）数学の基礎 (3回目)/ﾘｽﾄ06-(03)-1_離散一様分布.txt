@@ -1,0 +1,28 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-1_離散一様分布
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 確率質量関数 P(k)
+def fUniformDist(n):
+    return 1/n
+
+# パラメータに応じた分布計算
+n = 5
+Xlist = range(n)
+Llist = []
+Plist = []
+for x in Xlist:
+    Llist.append(x + 1)
+    Plist.append( fUniformDist(n) )
+
+# グラフ描画
+plt.figure(figsize=(5, 3))
+plt.title('Discrete Uniform Distribution')
+plt.bar(Xlist, Plist, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='p=1/5')
+plt.legend(loc='lower right')
+plt.show()

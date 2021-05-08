@@ -1,0 +1,75 @@
+#************************************************************************/
+# ﾘｽﾄ03-(09)-2_変更不能なシーケンス型「タプル型 (tuple)」
+#************************************************************************/
+
+#(１) 値を指定してタプルを作成
+#(1.1) 宣言のみ
+tupleName = ()
+print("(1.1) 宣言のみ：{0}".format(tupleName))
+
+#(1.2) 宣言と同時に要素も登録
+tupleName = ("00","01","02")
+print("(1.2) 宣言と同時に要素も登録：{0}".format(tupleName))
+
+#(1.3) 宣言と同時に要素も登録(同一の値で個数指定で登録)
+tupleName = ("00",) * 3
+print("(1.3) 宣言と同時に要素も登録(同一の値で個数指定で初期化)：{0}".format(tupleName))
+
+#(1.4) 宣言と同時に要素も登録(同一のタプルで個数指定で登録)
+tupleName = ("00","01","02") * 2
+print("(1.4) 宣言と同時に要素も登録(同一のタプルで個数指定で登録)：{0}".format(tupleName))
+
+#(1.5) 変数に代入された値を要素として指定)
+val00 = "00"
+val01 = "01"
+val02 = "02"
+tupleName = (val00, val01, val02)
+print("(1.5) 変数に代入された値を要素として指定)：{0}".format(tupleName))
+
+
+#(2) 配列の長さ、要素の参照
+#(2.1) 要素数(長さ)を取得(len()関数)
+tupleName = ("00","01","02")
+print("(2.1) 要素数(長さ)を取得(len()関数)：{0}".format(len(tupleName)))
+
+#(2.2) 要素の参照(0以上のｲﾝﾃﾞｯｸｽで参照⇒最初の要素から参照)
+tupleName = ("00","01","02")
+print("(2.2) 要素の参照(0以上のｲﾝﾃﾞｯｸｽで参照⇒最初の要素から参照)：tupleName[0]={0}".format(tupleName[0]))
+print("(2.2) 要素の参照(0以上のｲﾝﾃﾞｯｸｽで参照⇒最初の要素から参照)：tupleName[2]={0}".format(tupleName[2]))
+
+#(2.3) 要素の参照(ﾏｲﾅｽのｲﾝﾃﾞｯｸｽで参照⇒最後の要素から参照)
+tupleName = ("00","01","02")
+print("(2.3) 要素の参照(ﾏｲﾅｽのｲﾝﾃﾞｯｸｽで参照⇒最後の要素から参照)：tupleName[-1]={0}".format(tupleName[-1]))
+print("(2.3) 要素の参照(ﾏｲﾅｽのｲﾝﾃﾞｯｸｽで参照⇒最後の要素から参照)：tupleName[-3]={0}".format(tupleName[-3]))
+
+#(2.4) スライス機能を使用して参照
+tupleName = ("00","01","02","03","04")
+print("(2.4) スライス機能を使用して参照：tupleName[1:3]={0}".format(tupleName[1:3]))
+print("(2.4) スライス機能を使用して参照：tupleName[ :3]={0}".format(tupleName[ :3]))
+print("(2.4) スライス機能を使用して参照：tupleName[1: ]={0}".format(tupleName[1: ]))
+print("(2.4) スライス機能を使用して参照：tupleName[ : ]={0}".format(tupleName[ : ]))
+
+#(3) 配列を結合
+#(3.1) 配列を結合(+演算子で、配列を結合)
+tupleName1 = ("00","01","02")
+tupleName2 = ("03","04","05")
+tupleName = tupleName1 + tupleName2
+print("(3.1) 配列を結合(+演算子で、配列を結合)：{0}".format(tupleName))
+
+#(4) range型との連携
+#(4.1) range からリストを生成したい場合はtuple()関数を使用
+tupleName = tuple(range(3))
+print("(4.1) range からリストを生成したい場合はtuple()関数を使用：tuple(range(3))={0}".format(tuple(range(3))))
+print("(4.1) range からリストを生成したい場合はtuple()関数を使用：tuple(range(3, 10))={0}".format(tuple(range(3, 10))))
+
+#(5) 要素の検索
+#(5.1) 要素の検索(in演算子で、値指定による検索：True / False を返す)
+tupleName = ("00","01","02","03")
+print("(5.1) 要素の検索(in演算子で、値指定による検索：True / False を返す)：{0}".format("02" in tupleName))  # "02" は値
+print("(5.1) 要素の検索(in演算子で、値指定による検索：True / False を返す)：{0}".format("04" in tupleName))  # "04" は値
+
+#(5.2) 要素の検索(indexメソッドで、値指定による検索)
+tupleName = ("00","01","02","03")
+print("(5.2) 要素の検索(indexメソッドで、値指定による検索)：{0}".format(tupleName.index("02")))  # "02" は値
+print(tupleName.index("04"))
+#⇒ ValueError: '04' is not in tuple

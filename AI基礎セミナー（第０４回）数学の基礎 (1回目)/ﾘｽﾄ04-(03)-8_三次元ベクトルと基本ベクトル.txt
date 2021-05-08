@@ -1,0 +1,41 @@
+#*************************************************
+# ﾘｽﾄ04-(03)-8_三次元ベクトルと基本ベクトル
+#*************************************************
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D #3次元プロットのためのimport
+import numpy as np
+
+fig = plt.figure()
+ax = Axes3D(fig)
+
+# 座標の描画範囲
+LXs, LYs, LZs = 0,0,0
+LXe, LYe, LZe = 5,5,5
+ax.set_xlim([LXs, LXe])
+ax.set_ylim([LYs, LYe])
+ax.set_zlim([LZs, LZe])
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
+
+# 原点(0,0,0) から座標(2,3,4) へ向かうベクトル
+# それを基本ベクトルの一次結合として表現する
+ex = np.array([1,0,0])
+ey = np.array([0,1,0])
+ez = np.array([0,0,1])
+ve = 2*ex + 3*ey + 4*ez
+vs = np.array([0,0,0])
+
+# 位置ベクトルとして描画
+ax.scatter3D(vs[0],vs[1],vs[2], "o", color='blue') # 座標原点
+ax.quiver(vs[0],vs[1],vs[2], ve[0],ve[1],ve[2], color='red',length=1, normalize=False)
+ax.quiver(vs[0],vs[1],vs[2], ex[0],ex[1],ex[2], color='blue',length=1, normalize=False)
+ax.quiver(vs[0],vs[1],vs[2], ey[0],ey[1],ey[2], color='blue',length=1, normalize=False)
+ax.quiver(vs[0],vs[1],vs[2], ez[0],ez[1],ez[2], color='blue',length=1, normalize=False)
+
+ax.quiver(vs[0],vs[1],vs[2], 2*ex[0],ex[1],ex[2], color='green',length=1, normalize=False)
+ax.quiver(vs[0],vs[1],vs[2], ey[0],3*ey[1],ey[2], color='green',length=1, normalize=False)
+ax.quiver(vs[0],vs[1],vs[2], ez[0],ez[1],4*ez[2], color='green',length=1, normalize=False)
+plt.grid()
+plt.draw()
+plt.show()

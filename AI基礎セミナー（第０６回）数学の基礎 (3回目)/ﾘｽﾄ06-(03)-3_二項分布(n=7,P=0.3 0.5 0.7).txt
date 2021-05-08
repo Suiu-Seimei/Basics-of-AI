@@ -1,0 +1,60 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-3_二項分布(n=7,P=0.3/0.5/0.7)
+#*************************************************
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 二項分布の確率質量関数
+def fBinominal(n, p, k):
+    return fCombinaton(n,k) * ((p)**k) * ((1-p)**(n-k))
+
+# 組合せ nCr
+def fCombinaton(n, r):
+    return  math.factorial(n) // \
+           (math.factorial(n - r) * math.factorial(r))
+
+# パラメータに応じた分布計算
+n = 7
+p1 = 0.3
+p2 = 0.5
+p3 = 0.7
+Xlist = range(n+1)
+Llist = range(n+1)
+Plist1 = []
+Plist2 = []
+Plist3 = []
+for x in Xlist:
+    Plist1.append( fBinominal(n, p1, x) )
+for x in Xlist:
+    Plist2.append( fBinominal(n, p2, x) )
+for x in Xlist:
+    Plist3.append( fBinominal(n, p3, x) )
+
+# グラフ描画
+plt.figure(figsize=(15, 3))
+
+plt.subplot(1, 3, 1)
+plt.title('Binominal distribution')
+plt.bar(Xlist, Plist1, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='(n=7, p=0.3)')
+plt.legend(loc='upper right')
+plt.ylim(0.0, 0.4)
+
+plt.subplot(1, 3, 2)
+plt.title('Binominal distribution')
+plt.bar(Xlist, Plist2, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='(n=7, p=0.5)')
+plt.legend(loc='upper right')
+plt.ylim(0.0, 0.4)
+
+plt.subplot(1, 3, 3)
+plt.title('Binominal distribution')
+plt.bar(Xlist, Plist3, tick_label=Llist, align="center", \
+        facecolor="cornflowerblue", label='(n=7, p=0.7)')
+plt.legend(loc='upper right')
+plt.ylim(0.0, 0.4)
+
+plt.show()

@@ -1,0 +1,76 @@
+#*************************************************
+# ﾘｽﾄ05-(03)-2_べき関数とその導関数の実装例
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# 指数関数
+def fExp(x, a):
+    return a**x
+
+# 指数関数の微分
+def dfExp(x, a):
+    return (a**x)*np.log(a)
+
+# ネイピア数 e
+e = np.exp(1) 
+
+# x データ列
+x = np.linspace(-4, 4, 100)
+
+# 指数関数とその導関数
+y1 = fExp(x, 2)
+y2 = fExp(x, e)
+y3 = fExp(x, 1)
+y4 = fExp(x, 0.5)
+dy1 = dfExp(x, 2)
+dy2 = dfExp(x, e)
+dy3 = dfExp(x, 1)
+dy4 = dfExp(x, 0.5)
+
+# グラフ表示
+plt.figure(figsize=(12,7))
+plt.subplots_adjust(wspace=0.2, hspace=0.5)
+
+# グラフ表示：指数関数 y=2^x
+plt.subplot(2,2,1)
+plt.title("(Exp. function $y=2^x$)")
+plt.plot(x, y1, 'black', linewidth=2, label='$y=2^x$')
+plt.plot(x, dy1, 'cornflowerblue', linewidth=2, label='$dy/dx=(2^x)log(2)$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：指数関数 y=e^x
+plt.subplot(2,2,2)
+plt.title("(Power function $y=e^x$)")
+plt.plot(x, y2, 'black', linewidth=2, label='$y=e^x$')
+plt.plot(x, dy2, 'cornflowerblue', linewidth=2, label='$dy/dx=(e^x)log(e)$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：指数関数 y=1^x
+plt.subplot(2,2,3)
+plt.title("(Exp. function $y=1^x$)")
+plt.plot(x, y3, 'black', linewidth=2, label='$y=1^x$')
+plt.plot(x, dy3, 'cornflowerblue', linewidth=2, label='$dy/dx=(1^x)log(1)$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：指数関数 y=0.5^x
+plt.subplot(2,2,4)
+plt.title("(Exp. function $y=0.5^x$)")
+plt.plot(x, y4, 'black', linewidth=2, label='$y=0.5^x$')
+plt.plot(x, dy4, 'cornflowerblue', linewidth=2, label='$dy/dx=(0.5^x)log(0.5)$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+plt.show()

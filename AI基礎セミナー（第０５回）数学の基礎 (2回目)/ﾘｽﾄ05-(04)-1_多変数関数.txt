@@ -1,0 +1,58 @@
+#*************************************************
+# ﾘｽﾄ05-(04)-1_多変数関数
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 関数「y(x1,x2) = x1**2 + x2**2 + 3*x2 + 4」
+def f(x1, x2):
+    return x1**2 + x2**2 + 3*x2 + 4
+
+# データの範囲とグリッド
+x_range = 5
+dx = 0.5
+x1 = np.arange(-x_range, x_range+dx, dx)
+x2 = np.arange(-x_range, x_range+dx, dx)
+xn = x1.shape[0]
+mesh1, mesh2 = np.meshgrid(x1, x2)
+
+# 関数値を算出
+ff = np.zeros( (len(x1), len(x2)) )
+for i0 in range(xn):
+    for i1 in range(xn):
+        ff[i1, i0] = f( x1[i0], x2[i1] )
+        
+# グラフ描画を複数行う為の準備
+plt.figure(figsize=(15, 5))
+plt.subplots_adjust(wspace=0.3, hspace=0.3)
+
+# 関数の面描画準備
+ax = plt.subplot(1, 2, 1, projection='3d' )
+ax.plot_surface(mesh1, mesh2, ff, rstride=1, cstride=1, 
+                alpha=0.3, color='blue', edgecolor='black')
+ax.set_zticks(( 0, 0.2 ))
+ax.view_init( 60, -120 )
+ax.set_title('$(bird view)$')
+ax.set_xlim(-x_range - 0.5, x_range + 0.5)
+ax.set_ylim(-x_range - 0.5, x_range + 0.5)
+ax.set_zlim(0, 50)
+ax.set_xlabel('$x1$', fontsize=14)
+ax.set_ylabel('$x2$', fontsize=14)
+ax.set_zlabel('$y$', fontsize=14)
+
+# 関数の等高線描画準備
+plt.subplot(1, 2, 2)
+cont = plt.contour(mesh1, mesh2, ff, 10, colors='k')
+cont.clabel(fmt='%2.0f', fontsize=8)
+plt.xticks(range(-x_range, x_range + 1, 1))
+plt.yticks(range(-x_range, x_range + 1, 1))
+plt.xlim(-x_range - 0.5, x_range + 0.5)
+plt.ylim(-x_range - 0.5, x_range + 0.5)
+plt.xlabel('$x1$', fontsize=14)
+plt.ylabel('$x2$', fontsize=14)
+plt.title('$(contour)$')
+
+# 表示
+plt.show()

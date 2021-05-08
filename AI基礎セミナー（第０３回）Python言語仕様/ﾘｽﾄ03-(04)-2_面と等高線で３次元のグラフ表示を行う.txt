@@ -1,0 +1,42 @@
+#*************************************************************************
+#  ﾘｽﾄ03-(04)-2_面と等高線で３次元のグラフ表示を行う
+#*************************************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 関数
+def f3(x, y):
+    ans = np.exp( -x**2 - y**2 )
+    return ans
+
+# データ作成
+cnt = 50
+xlist = np.linspace(-2, 2, cnt)
+ylist = np.linspace(-2, 2, cnt)
+ztbl = np.zeros( (len(xlist), len(ylist)) )
+for ix in range(cnt):
+    for iy in range(cnt):
+        ztbl[iy, ix] = f3( xlist[ix], ylist[iy] )
+
+# 描画：面表示
+xMeshgrid, yMeshgrid = np.meshgrid(xlist, ylist)
+plt.figure(figsize=(5, 3.5))
+ax = plt.subplot( 1,1,1, projection='3d' )
+ax.plot_surface(xMeshgrid, yMeshgrid, ztbl, rstride=1, cstride=1, 
+                alpha=0.3, color='blue', edgecolor='black')
+ax.set_zticks(( 0, 0.2 ))
+ax.view_init( 75, -95 )
+print(ax, "type(ax)=", type(ax), "type(xMeshgrid)=", type(xMeshgrid))
+plt.show()
+
+# 描画：等高線表示
+xMeshgrid, yMeshgrid = np.meshgrid(xlist, ylist)
+plt.figure(1, figsize=(4, 4))
+cont = plt.contour(xMeshgrid, yMeshgrid, ztbl, 8, colors='black')
+cont.clabel(fmt='%3.2f', fontsize=8)
+plt.xlabel('$x$', fontsize=10)
+plt.ylabel('$y$', fontsize=10)
+print(cont, "type(cont)=", type(cont))
+plt.show()

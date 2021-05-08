@@ -1,0 +1,121 @@
+#************************************************************************
+# ﾘｽﾄ09-(06)-1_ﾛｼﾞｽﾃｨｯｸ回帰のｸﾞﾗﾌ
+#************************************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+from mpl_toolkits.mplot3d import axes3d
+
+#********************************************************************/
+# f_LogisticReg1                                                    */
+# ﾛｼﾞｽﾃｨｯｸ回帰ﾓﾃﾞﾙ (1次元)                                          */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   w   :偏回帰係数（D+1次元）                                      */
+#   x   :説明変数（1次元）                                          */
+#-------------------------------------------------------------------*/
+# 戻り値：                                                          */
+# (第１返値) logis：ﾛｼﾞｽﾃｨｯｸ回帰の計算値                            */
+#********************************************************************/
+def f_LogisticReg1( w, x ):
+    logit = w[0] + w[1]*x
+    logis = 1 / (1 + np.exp(-logit))
+    return logis
+
+#********************************************************************/
+# f_LogisticReg2                                                    */
+# ﾛｼﾞｽﾃｨｯｸ回帰ﾓﾃﾞﾙ (2次元)                                          */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   w    :偏回帰係数（D+1次元）                                     */
+#   x1   :説明変数1（1次元）                                        */
+#   x2   :説明変数2（1次元）                                        */
+#-------------------------------------------------------------------*/
+# 戻り値：                                                          */
+# (第１返値) logis：ﾛｼﾞｽﾃｨｯｸ回帰の計算値                            */
+#********************************************************************/
+def f_LogisticReg2( w, x1, x2 ):
+    logit = w[0] + w[1]*x1 + w[2]*x2
+    logis = 1 / (1 + np.exp(-logit))
+    return logis
+
+#********************************************************************/
+# f_ShowLogistic1                                                   */
+# 指定した偏回帰係数で、1次元ﾛｼﾞｽﾃｨｯｸ回帰ﾓﾃﾞﾙの計算値を計算し、     */
+# グラフを表示する。                                                */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   plt     : 表示ｵﾌﾞｼﾞｪｸﾄ                                          */
+#   xMeshNo : 表示時のメッシュ数                                    */ 
+#   xRange  : 説明変数 の表示範囲                                   */
+#   wList   : 偏回帰係数                                            */
+#-------------------------------------------------------------------*/
+# 戻り値：                                                          */
+#********************************************************************/
+def f_ShowLogistic1( plt, xMeshNo, xRange, wList ):
+    xList = np.linspace(xRange[0], xRange[1], xMeshNo)
+    yylogis = f_LogisticReg1(wList, xList)
+
+    plt.title("logistic regression model (1dim)")
+    plt.plot(xList, yylogis, marker='o', linestyle='-',
+             markeredgecolor='black', color='cornflowerblue')
+
+    plt.xlim(xRange[0], xRange[1])
+    plt.ylim(np.min(yylogis)-0.1, np.max(yylogis)+0.1)
+    plt.xlabel("X")
+    plt.ylabel("Y= 1/(1+exp(-({0}+{1}x))".format(wList[0],wList[1]))
+    plt.grid(True)
+    return
+
+#********************************************************************/
+# f_ShowLogistic2                                                   */
+# 指定した偏回帰係数で、2次元ﾛｼﾞｽﾃｨｯｸ回帰ﾓﾃﾞﾙの計算値を計算し、     */
+# 3次元グラフを表示する。                                           */
+#-------------------------------------------------------------------*/
+# 引数：                                                            */
+#   ax      : 3次元表示ｵﾌﾞｼﾞｪｸﾄ                                     */
+#   xMeshNo : 表示時のメッシュ数                                    */ 
+#   x1Range : 説明変数1 の表示範囲                                  */
+#   x2Range : 説明変数2 の表示範囲                                  */
+#   wList   : 偏回帰係数                                            */
+#-------------------------------------------------------------------*/
+# 戻り値：                                                          */
+#********************************************************************/
+def f_ShowLogistic2( ax, xMeshNo, x1Range, x2Range, wList ):
+
+    x1 = np.linspace(x1Range[0], x1Range[1], xMeshNo)
+    x2 = np.linspace(x2Range[0], x2Range[1], xMeshNo)
+    xx1, xx2 = np.meshgrid(x1, x2)
+    yylogis = f_LogisticReg2(wList, xx1, xx2)
+
+    ax.set_title("logistic regression model (2dim)")
+    ax.set_xlabel("X1")
+    ax.set_ylabel("X2")
+    ax.set_zlabel("Z= 1/(1+exp(-({0}+{1}x1+{2}x2))".format(
+                    wList[0],wList[1],wList[2]))
+    ax.plot_surface(xx1,xx2, yylogis, color='blue', edgecolor='gray', 
+                    rstride=5, cstride=5, alpha=0.3)
+    ax.view_init(elev=45, azim=-60)
+    return
+
+#************************************************************************/
+# メイン処理                                                            */
+#************************************************************************/
+# ｸﾞﾗﾌ表示ﾊﾟﾗﾒｰﾀ
+xMeshNo = 50
+plt.琦ure(琦size=(12, 7))
+plt.subplots_adjust(wspace=0.5, hspace=0.5)
+
+# 1次元ﾛｼﾞｽﾃｨｯｸ回帰曲線
+plt.subplot(2, 1, 1)
+wList1 = [1,1]
+xRange = [-5, 5]
+f_ShowLogistic1( plt, xMeshNo, xRange, wList1 )
+
+# 2次元ﾛｼﾞｽﾃｨｯｸ回帰曲面
+plt.琦ure(琦size=(12, 10))
+ax = plt.subplot(2, 1, 2, projection='3d')
+wList2 = [1,1,1]
+x1Range = [-5, 5]
+x2Range = [-5, 5]
+f_ShowLogistic2( ax, xMeshNo, x1Range, x2Range, wList2 )

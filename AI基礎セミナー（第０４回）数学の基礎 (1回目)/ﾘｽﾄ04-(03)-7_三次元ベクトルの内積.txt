@@ -1,0 +1,37 @@
+#*************************************************
+# ﾘｽﾄ04-(03)-7_三次元ベクトルの内積
+#*************************************************
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D #3次元プロットのためのimport
+import numpy as np
+
+fig = plt.figure()
+ax = Axes3D(fig)
+
+# 座標の描画範囲
+LXs, LYs, LZs = 0,0,0
+LXe, LYe, LZe = 5,5,5
+ax.set_xlim([LXs, LXe])
+ax.set_ylim([LYs, LYe])
+ax.set_zlim([LZs, LZe])
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
+
+# ベクトル a, b と内積 a・b
+O = np.array([0,0,0]) # 座標原点
+a = np.array([1,2,3])
+b = np.array([3,2,1])
+
+print('type(a)=', type(a), ", a=", a, ", |a|=", np.linalg.norm(a))
+print('type(b)=', type(b), ", b=", b, ", |b|=", np.linalg.norm(b))
+print('a・b= ', a.dot(b))
+
+# 各ベクトルを位置ベクトルとして描画
+ax.scatter3D(O[0],O[1],O[2],"o", color='blue') # 座標原点
+ax.quiver(O[0],O[1],O[2], a[0],a[1],a[2], color='red',length=1, normalize=False)
+ax.quiver(O[0],O[1],O[2], b[0],b[1],b[2], color='red',length=1, normalize=False)
+
+plt.grid()
+plt.draw()
+plt.show()

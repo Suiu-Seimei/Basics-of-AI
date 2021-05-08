@@ -1,0 +1,72 @@
+#*************************************************
+# ÿΩƒ10-(03)-1_Scikit-learn Iris data
+#*************************************************
+from sklearn import datasets
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# load Iris data
+iris_dt = datasets.load_iris()
+
+# print Iris data
+print("--- Iris keys ---")
+print("{0}\n".format(iris_dt.keys()))
+
+print("--- Iris target_names ---")
+print("target_names={0}\n".format(iris_dt.target_names))
+
+print("--- Iris target ---")
+print("target={0}\n".format(iris_dt.target))
+
+print("--- Iris feature_names ---")
+print("{0}\n".format(iris_dt.feature_names))
+
+print("--- Iris data number ---")
+for i in range(0, len(iris_dt.target_names)):
+    dataNi = sum(x==i for x in iris_dt.target)
+    print("{0} : {1}".format(iris_dt.target_names[i], dataNi)) 
+print("")
+
+print("--- Iris data range of 4 features ---")
+DISP_MIN = 0
+DISP_MAX = 0
+for i in range(0, len(iris_dt.feature_names)):
+    print("{0} : {1}Å`{2}".format(iris_dt.feature_names[i], np.min(iris_dt.data[:, i]), np.max(iris_dt.data[:, i])))
+    if i == 0:
+        DISP_MIN = np.min(iris_dt.data[:, i])
+        DISP_MAX = np.max(iris_dt.data[:, i])
+    else:
+        DISP_MIN = min(DISP_MIN, np.min(iris_dt.data[:, i]))
+        DISP_MAX = max(DISP_MAX, np.max(iris_dt.data[:, i]))
+
+# display range
+DISP_MIN = int(DISP_MIN - 1)
+DISP_MAX = int(DISP_MAX + 1)
+print("( display range : {0}Å`{1} )".format(DISP_MIN, DISP_MAX))
+                       
+# plot Iris data
+axislist = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]
+collist = ['cornflowerblue', 'red', 'yellow']
+mrklist = ['o', '^', 'o']
+
+plt.figure(figsize=(15, 10))
+
+for xy in range(0,len(axislist)):
+    plt.subplot(2,3, xy+1)
+    axisX = axislist[xy][0]
+    axisY = axislist[xy][1]
+
+    for i in range(0, len(iris_dt.target_names)):
+        iList = np.where(iris_dt.target==i)
+        plt.plot(iris_dt.data[iList, axisX], 
+                 iris_dt.data[iList, axisY], 
+                 mrklist[i], linestyle='None', 
+                 markeredgecolor='black', color=collist[i])
+    plt.xlim(DISP_MIN, DISP_MAX)
+    plt.ylim(DISP_MIN, DISP_MAX)
+    plt.xlabel(iris_dt.feature_names[axisX])
+    plt.ylabel(iris_dt.feature_names[axisY])
+    plt.grid(True)
+
+plt.show()

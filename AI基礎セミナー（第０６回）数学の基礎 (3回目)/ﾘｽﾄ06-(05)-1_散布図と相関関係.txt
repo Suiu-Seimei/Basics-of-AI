@@ -1,0 +1,45 @@
+#*************************************************
+# Ø½Ä06-(05)-1_U•z}‚Æ‘ŠŠÖŠÖŒW
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ”N
+NEN_list = [ 2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,
+             2010,2011,2012,2013,2014,2015,2016,2017,2018,2019 ]
+
+# ŒoÏ¬’·—¦(“ú–{)
+X_list = [ 2.78, 0.41, 0.12, 1.53, 2.21, 1.66, 1.42, 1.65, -1.09, -5.42, 
+           4.19, -0.12, 1.50, 2.00, 0.38, 1.22, 0.52, 2.17, 0.28, 0.67 ]
+X_min = -7
+X_max = 7
+
+# Š®‘S¸‹Æ—¦(‘S‘) 
+Y_list = [ 4.7, 5.0, 5.4, 5.3, 4.7, 4.4, 4.1, 3.9, 4.0, 5.1, 
+           5.1, 4.5, 4.3, 4.0, 3.6, 3.4, 3.1, 2.8, 2.4, 2.4 ]
+Y_min = 1
+Y_max = 7
+
+# U•z}•\¦ -------------------------------
+plt.figure(figsize=(4,4))
+plt.plot(X_list, Y_list, marker='o', linestyle='None', markeredgecolor='black', color='cornflowerblue')
+plt.xlim(X_min, X_max)
+plt.ylim(Y_min, Y_max)
+plt.title('Scatter plot')
+plt.xlabel( 'Keizai Seichouritsu [%]' )
+plt.ylabel( 'Situgyouritsu [%]' )
+plt.grid(True)
+plt.show()
+
+# Œn—ñ•\¦ -------------------------------
+plt.figure(figsize=(10,4))
+plt.plot( NEN_list, Y_list, color='black', linewidth=3, label='Situgyouritsu' )
+plt.plot( NEN_list, X_list, color='gray', linewidth=3, linestyle='--', label='Keizai Seichouritsu' )
+plt.title('Time series')
+plt.legend(loc='lower right')
+plt.ylim(X_min-1, X_max+1)
+plt.xlim(NEN_list[0]-1, NEN_list[19]+1)
+plt.xlabel('year')
+plt.ylabel('percent')
+plt.grid(True)
+plt.show()

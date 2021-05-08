@@ -1,0 +1,32 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-6_正規分布(μ=0,σ=1 標準正規分布)
+#*************************************************
+# 標準正規分布
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# ガウス分布関数
+def gauss(x, mu, sigma):
+    return (1 / (np.sqrt(2 * np.pi) * sigma))\
+            * np.exp(-(x - mu)**2 / (2 * sigma**2))
+
+# データとグリッド
+xn = 100
+xlist = np.linspace(-4, 4, xn)
+mu = 0
+sigma = 1
+
+# グラフ描画
+plt.figure(figsize=(8,4))
+plt.plot( xlist, gauss(xlist, mu, sigma), 'cornflowerblue', linewidth=3,\
+         label='y=1/(sqrt(2pai)*sigma) * exp(-(x-mu)**2/2*sigma)\ny=1/sqrt(2pai) * exp(-z**2/2)' )
+plt.title('Standard Normal Distribution  (mu=0, sigma=1)')
+plt.legend(loc='lower right')
+plt.ylim(-0.1, 0.5)
+plt.xlim(-4, 4)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()

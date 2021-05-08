@@ -1,0 +1,38 @@
+#*************************************************
+# ﾘｽﾄ04-(03)-4_三次元ベクトルの和を図示
+#*************************************************
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.axes3d import Axes3D #3次元プロットのためのimport
+import numpy as np
+
+fig = plt.figure()
+ax = Axes3D(fig)
+
+# 座標の描画範囲
+LXs, LYs, LZs = 0,0,0
+LXe, LYe, LZe = 5,5,5
+ax.set_xlim([LXs, LXe])
+ax.set_ylim([LYs, LYe])
+ax.set_zlim([LZs, LZe])
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
+
+# ベクトル v1, v2 と v3=v1+v2
+v0 = np.array([0,0,0]) # 座標原点
+v1 = np.array([1,2,3])
+v2 = np.array([3,2,1])
+v3 = v1 + v2
+
+# 各ベクトルを位置ベクトルとして描画
+ax.scatter3D(v0[0],v0[1],v0[2],"o", color='blue') # 座標原点
+ax.quiver(v0[0],v0[1],v0[2], v1[0],v1[1],v1[2], color='red',length=1, normalize=False)
+ax.quiver(v0[0],v0[1],v0[2], v2[0],v2[1],v2[2], color='red',length=1, normalize=False)
+ax.quiver(v0[0],v0[1],v0[2], v3[0],v3[1],v3[2], color='green',length=1, normalize=False)
+
+# ベクトル和の補助線を描画
+ax.quiver(v1[0],v1[1],v1[2], v2[0],v2[1],v2[2], color='blue',linestyle='--')
+ax.quiver(v2[0],v2[1],v2[2], v1[0],v1[1],v1[2], color='blue',linestyle='--')
+plt.grid()
+plt.draw()
+plt.show()

@@ -1,0 +1,27 @@
+#*************************************************
+# ﾘｽﾄ04-(04)-5_単位行列・行列式・逆行列
+#*************************************************
+import numpy as np
+
+print("3×3型単位行列 I")
+print(np.identity(3))
+
+print("\n3×3型行列 A")
+A = np.array([[11,2,3],[4,5,6],[7,8,9]])
+print('Matrix A')
+print(A)
+
+print("\n行列 A の行列式 det(A)" )
+print("行列式の値が０に近い時は、逆行列なしです。" )
+detA = np.linalg.det(A)
+print('det(A)=', detA)
+
+print("\n3×3型行列 A の逆行列 invA" )
+invA = np.linalg.inv(A)
+print('Matrix invA')
+print(invA)
+
+print("\n3×3型行列 A と逆行列 invA との積" )
+print("積が単位行列に(近く)なっていますか？" )
+print('Matrix A×invA')
+print(A.dot(invA))

@@ -1,0 +1,66 @@
+#*************************************************
+# ﾘｽﾄ05-(02)-1_微分、導関数、微分係数
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# 入力データを準備 -------------------------------
+X_min = -10              # X の下限（表示用）
+X_max = 10               # X の上限（表示用）
+Y_min = -20              # Y の下限（表示用）
+Y_max = X_min * X_min    # Y の上限（表示用）
+Xa = 3                   # 接線表示X座標
+
+# X方向の表示範囲とピッチ
+X_pitch = 0.2            # X方向のデータのピッチ
+X_cnt = (int)((X_max - X_min) / X_pitch + 1)
+Xlist = np.zeros([X_cnt]) # X座標値のリスト
+for xi in range(0, X_cnt):
+    Xlist[xi] = X_min + (xi * X_pitch)
+
+# 元の関数 y = f(x) = x**2 ------------------------
+def yEqualsSquareX(xlist):
+    ylist =  xlist * xlist
+    return ylist
+
+# 導関数 y = f'(x) = 2x ---------------------------
+def yEquals2x(xlist):
+    ylist =  2 * xlist
+    return ylist
+
+# x=a における接線関数 y = 2ax - a**2 -------------
+def yTangentx(xlist, a):
+    ylist =  2*a*xlist - a**2
+    return ylist
+    
+# メイン ------------------------------------------
+
+# Y座標値のリスト
+Ylist = yEqualsSquareX(Xlist)        # 元関数 y = f(x) = x**2 
+YdashList = yEquals2x(Xlist)         # 導関数 y = f'(x) = 2x 
+YTangentList = yTangentx(Xlist, Xa)  # x=a における接線関数 y = 2ax - a**2
+
+# グラフ描画を複数並べる為の準備
+plt.figure(figsize=(10, 4))
+plt.subplots_adjust(wspace=0.3)
+
+# 元関数(y = f(x) = x**2)と、導関数(y = f'(x) = 2x)をグラフ表示
+plt.subplot(1, 2, 1)
+plt.plot(Xlist, Ylist, color='blue', label='y=f(x)=x**2', linewidth=2)
+plt.plot(Xlist, YdashList, color='green', label='y=f''(x)=2x', linestyle='--', linewidth=2)
+plt.xlim(X_min, X_max)
+plt.ylim(Y_min, Y_max)
+plt.legend(loc='upper center')
+plt.grid(True)
+
+# 元関数(y = f(x) = x**2)と、x=a における接線(y = 2ax - a**2)をグラフ表示
+plt.subplot(1, 2, 2)
+plt.plot(Xlist, Ylist, color='blue', label='y=f(x)=x**2', linewidth=2)
+plt.plot(Xlist, YTangentList, color='red', label='y=2ax-a**2', linestyle='--', linewidth=2)
+plt.xlim(X_min, X_max)
+plt.ylim(Y_min, Y_max)
+plt.legend(loc='upper center')
+plt.grid(True)
+
+plt.show()

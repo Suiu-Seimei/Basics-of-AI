@@ -1,0 +1,68 @@
+#*************************************************
+# ﾘｽﾄ05-(03)-5_逆三角関数とその導関数の実装例
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# 逆三角関数 arcsin の微分
+def dfArcSin(x):
+    return 1 / np.sqrt(1 - x**2)
+
+# 逆三角関数 arccos の微分
+def dfArcCos(x):
+    return -1 / np.sqrt(1 - x**2)
+
+# 逆三角関数 arctan の微分
+def dfArcTan(x):
+    return  1 / (1 + x**2)
+
+# x データ列 (-1<x<1)
+x = np.linspace(-0.99, 0.99, 100)
+
+# 逆三角関数とその導関数
+y1 = np.arcsin(x)
+y2 = np.arccos(x)
+y3 = np.arctan(x)
+dy1 = dfArcSin(x)
+dy2 = dfArcCos(x)
+dy3 = dfArcTan(x)
+
+# グラフ表示
+plt.figure(figsize=(14,5))
+plt.subplots_adjust(wspace=0.2, hspace=0.5)
+
+# グラフ表示：逆三角関数 y=arcsin(x)
+plt.subplot(1,3,1)
+plt.title("(Tri.function $y=arcsin(x)$)")
+plt.plot(x, y1, 'black', linewidth=2, label='$y=arcsin(x)$')
+plt.plot(x, dy1, 'cornflowerblue', linewidth=2, label='$dy/dx=1/sqrt(1-x^2)$', linestyle='--')
+plt.ylim(-np.pi, np.pi)
+plt.xlim(-1, 1)
+plt.ylabel("[rad]")
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：逆三角関数 y=arccos(x)
+plt.subplot(1,3,2)
+plt.title("(Tri.function $y=arccos(x)$)")
+plt.plot(x, y2, 'black', linewidth=2, label='$y=arccos(x)$')
+plt.plot(x, dy2, 'cornflowerblue', linewidth=2, label='$dy/dx=-1/sqrt(1-x^2)$', linestyle='--')
+plt.ylim(-np.pi, np.pi)
+plt.xlim(-1, 1)
+plt.ylabel("[rad]")
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：逆三角関数 y=arctan(x)
+plt.subplot(1,3,3)
+plt.title("(Tri.function $y=arctan(x)$)")
+plt.plot(x, y3, 'black', linewidth=2, label='$y=arctan(x)$')
+plt.plot(x, dy3, 'cornflowerblue', linewidth=2, label='$dy/dx=1/(1+x^2)$', linestyle='--')
+plt.ylim(-np.pi, np.pi)
+plt.xlim(-1, 1)
+plt.ylabel("[rad]")
+plt.grid(True)
+plt.legend(loc='lower right')
+
+plt.show()

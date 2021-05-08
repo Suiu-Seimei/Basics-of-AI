@@ -1,0 +1,74 @@
+#*************************************************
+# ﾘｽﾄ05-(03)-1_べき関数とその導関数の実装例
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# べき関数
+def fPower(x, a):
+    return x**a
+
+# べき関数の微分
+def dfPower(x, a):
+    return a * x**(a-1)
+
+# x データ列
+x = np.linspace(-4, 4, 100)
+x2 = np.linspace(0.01, 4, 100)
+
+# べき関数とその導関数
+y1 = fPower(x, 1)
+y2 = fPower(x, 2)
+y3 = fPower(x, 3)
+y4 = fPower(x2, 0.5)
+dy1 = dfPower(x, 1)
+dy2 = dfPower(x, 2)
+dy3 = dfPower(x, 3)
+dy4 = dfPower(x2, 0.5)
+
+# グラフ表示
+plt.figure(figsize=(12,7))
+plt.subplots_adjust(wspace=0.2, hspace=0.5)
+
+# グラフ表示：べき関数 y=x^1
+plt.subplot(2,2,1)
+plt.title("(Power function $y=x^1$)")
+plt.plot(x, y1, 'black', linewidth=2, label='$y=x^1$')
+plt.plot(x, dy1, 'cornflowerblue', linewidth=2, label='$dy/dx=1$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：べき関数 y=x^2
+plt.subplot(2,2,2)
+plt.title("(Power function $y=x^2$)")
+plt.plot(x, y2, 'black', linewidth=2, label='$y=x^2$')
+plt.plot(x, dy2, 'cornflowerblue', linewidth=2, label='$dy/dx=2x$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：べき関数 y=x^3
+plt.subplot(2,2,3)
+plt.title("(Power function $y=x^3$)")
+plt.plot(x, y3, 'black', linewidth=2, label='$y=x^3$')
+plt.plot(x, dy3, 'cornflowerblue', linewidth=2, label='$dy/dx=3x^2$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+# グラフ表示：べき関数 y=x^0.5
+plt.subplot(2,2,4)
+plt.title("(Power function $y=x^0.5$)")
+plt.plot(x2, y4, 'black', linewidth=2, label='$y=x^0.5$')
+plt.plot(x2, dy4, 'cornflowerblue', linewidth=2, label='$dy/dx=0.5x^-0.5$', linestyle='--')
+plt.ylim(-2, 3)
+plt.xlim(-4, 4)
+plt.grid(True)
+plt.legend(loc='lower right')
+
+plt.show()

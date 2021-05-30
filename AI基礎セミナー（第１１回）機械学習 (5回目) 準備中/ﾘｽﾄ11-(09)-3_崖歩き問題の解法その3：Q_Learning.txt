@@ -1,14 +1,12 @@
 #*************************************************************************
-# ﾘｽﾄ 11-(09)-3_Q_Learning
+# ﾘｽﾄ11-(09)-3_崖歩き問題の解法その3：Q_Learning
 #  Q学習 (Q-Learning)で、
 # 「(8.1) ﾓﾃﾞﾙﾌﾘｰな手法での例題」の「(例題) 崖歩き」の決定論的方策πを作成する。
 #  ※ 事前に「ﾘｽﾄ11-(09)-0_ﾓﾃﾞﾙﾌﾘｰな手法での共通実装」を実行しておくこと。
 #*************************************************************************
-import numpy as np
+#import numpy as np
 import time
-import copy
-import matplotlib.pyplot as plt
-%matplotlib inline
+#import matplotlib.pyplot as plt
 
 
 #*************************************************************************
@@ -281,3 +279,4 @@ for rii in range(0,100):
 
   # 1ｴﾋﾟｿｰﾄﾞ分の足跡を表示する
   showObj.showFootprint(agent, env, episode)
+  

@@ -1,22 +1,18 @@
 #*************************************************************************
-# ﾘｽﾄ 11-(09)-2_SARSA
-#  SARSAで、
+#  ﾘｽﾄ11-(09)-1_崖歩き問題の解法その1：ﾓﾝﾃｶﾙﾛ法
+#  ﾓﾝﾃｶﾙﾛ法で、
 # 「(8.1) ﾓﾃﾞﾙﾌﾘｰな手法での例題」の「(例題) 崖歩き」の決定論的方策πを作成する。
-#  ※ 事前に「ﾘｽﾄ11-(09)-0_ﾓﾃﾞﾙﾌﾘｰな手法での共通実装」を実行しておくこと。
+#  ※ 事前に「ﾘｽﾄ11-(08)-1_崖歩き問題の環境と表示のｸﾗｽ」を実行しておくこと。
 #*************************************************************************
-import numpy as np
+#import numpy as np
 import time
-import copy
-import matplotlib.pyplot as plt
-%matplotlib inline
+#import matplotlib.pyplot as plt
 
 
 #*************************************************************************
 # ｸﾗｽ     HyperParam
 #-------------------------------------------------------------------------
 # ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀのｸﾗｽ
-#-------------------------------------------------------------------------
-# (※) 実装にﾓﾝﾃｶﾙﾛ法と相違あり：ﾊﾟﾗﾒｰﾀの構成に違いあり
 #*************************************************************************
 class HyperParam:
 
@@ -25,24 +21,23 @@ class HyperParam:
   #-----------------------------------------------------------------------
   # 以下のｲﾝｽﾀﾝｽ変数を定義し、指定値で初期化する：
   #
-  # alpha      ：ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀα：係数(ｻﾝﾌﾟﾘﾝｸﾞ時の平均用の重み係数に相当)
-  # gamma      ：ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀγ：割引率
-  # eps_Train  ：ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀε：学習時のε-greedy法のﾊﾟﾗﾒｰﾀε
-  # eps_Run    ：εの実行時の値
-  #            （ε=0 で実行すると、方策πが完成していなくて終端に到達しない場合がある。
-  #              εを 0 より大きいができるだけ小さい値で実行することにより、
-  #              学習済の方策πを最大限に生かす方針の下で開始点から終了点まで移動する。)
-  # episodeNum ：方策改善時に学習の為に取得するｴﾋﾟｿｰﾄﾞの最大回数
-  # trace      ：True:追跡出力する、False:しない
+  # eps_First： ｻﾝﾌﾟﾘﾝｸﾞ時のε-greedy法のｰﾊﾟﾗﾒｰﾀ (0≦ε≦1)εの初期値
+  # eps_Last ： 学習時に、ε-greedy法のﾊﾟﾗﾒｰﾀεを徐々に減少させながら、
+  #             ｴﾋﾟｿｰﾄﾞを繰り返して行動価値関数Ｑπ(s,a) の精度を上げてゆく。
+  #             eps_Last は学習のためのｴﾋﾟｿｰﾄﾞ繰り返しの終了判断のεの最終値
+  # eps_Rate ：εの1ｴﾋﾟｿｰﾄﾞ毎の減少率(0＜ε＜1、ε←⊿εrate×ε)
+  # eps_Run  ：εの実行時の値
+  #          （ε=0 で実行すると、方策πが完成していなくて終端に到達しない場合がある。
+  #            εを 0 より大きいができるだけ小さい値で実行することにより、
+  #            学習済の方策πを最大限に生かす方針の下で開始点から終了点まで移動する。)
+  # trace    ：True:追跡出力する、False:しない
   #
   #***********************************************************************
-  def __init__(self, alpha, gamma, eps_Train, eps_Run, episodeNum, trace):
-    # ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀα、γ、ε
-    self.alpha = alpha
-    self.gamma = gamma
-    self.eps_Train = eps_Train
+  def __init__(self, eps_First, eps_Last, eps_Rate, eps_Run, trace):
+    self.eps_First = eps_First
+    self.eps_Last = eps_Last
+    self.eps_Rate = eps_Rate
     self.eps_Run = eps_Run
-    self.episodeNum = episodeNum
     self.trace = trace
 
 
@@ -63,10 +58,8 @@ class Agent:
   #    actions       ：取りうる行動a（＝移動ﾍﾞｸﾄﾙ(Δx,Δy)）の集合Ａ
   #    policy        ：決定論的方策π(s)（＝現在の状態s でとる行動a）
   #    q             ：状態s で行動a を取った時の行動価値関数Ｑπ(s,a) 
+  #    n             ：状態s で行動a を取った訪問回数
   #
-  #-----------------------------------------------------------------------
-  # (※) 実装にﾓﾝﾃｶﾙﾛ法と相違あり：
-  #        ・訪問回数 "n" を持たない
   #***********************************************************************
   def __init__(self, env):
     
@@ -83,7 +76,7 @@ class Agent:
       self.policy[s] = self.actions[np.random.randint(len(self.actions))]
 
     # 状態s で行動a を取った時の行動価値関数Ｑπ(s,a) "q" を
-    # ディクショナリ型で保持し、0で初期化する 
+    # ディクショナリ型で保持し、計算上あり得ない小さい値で初期化する 
     #  キー：(s,a)、値：q
     #     s： 状態s（＝現在の位置座標(x,y)）
     #     a： 状態s でとる行動a（＝移動ﾍﾞｸﾄﾙ(Δx,Δy)）
@@ -91,64 +84,64 @@ class Agent:
     self.q = {}
     for s in env.states:
       for a in self.actions:
-        self.q[(s, a)] = 0
+        self.q[(s, a)] = -10**10
+
+    # 状態s で行動a を取った訪問回数 "n" をディクショナリ型で保持し、0で初期化する 
+    #  キー：(s,a)、値：n
+    #     s： 状態s（＝現在の位置座標(x,y)）
+    #     a： 状態s でとる行動a（＝移動ﾍﾞｸﾄﾙ(Δx,Δy)）
+    #     n： 状態s で行動a を取った訪問回数Ｎ(s,a)
+    self.n = {}
+    for s in env.states:
+      for a in self.actions:
+        self.n[(s, a)] = 0
 
   #***********************************************************************
-  # Agent ｸﾗｽ : getEpisodeAndLearn
-  # ｼﾐｭﾚｰｼｮﾝにより、1回分のｴﾋﾟｿｰﾄﾞを取得しながら、方策改善を行う
+  # Agent ｸﾗｽ : getEpisode
+  # ｼﾐｭﾚｰｼｮﾝにより、1回分のｴﾋﾟｿｰﾄﾞを取得する
   #-----------------------------------------------------------------------
   # 引数：
   #   env     ：Environment のｲﾝｽﾀﾝｽ
-  #   param   ：HyperParam のｲﾝｽﾀﾝｽ
-  #   epsilon ：ε-greedy法のﾊﾟﾗﾒｰﾀε (不使用)
-  #   inTrain ：方策改善の為の学習中の場合:True、学習中でない場合:False
+  #   epsilon ：ε-greedy法のﾊﾟﾗﾒｰﾀε
   #-----------------------------------------------------------------------
   # 戻り値：
   # (第１返値) episode: 
   #             開始点から出口に至るまでの１回分のｴﾋﾟｿｰﾄﾞの
-  #             状態遷移の流れを、ﾀﾌﾟﾙ型ｵﾌﾞｼﾞｪｸﾄ (s,a,r)  の
+  #             状態遷移の流れを、ﾀﾌﾟﾙ型オブジェクト (s,a,r)  の
   #             ﾘｽﾄとして保存したもの
   #
   #          s：状態s (＝位置座標(x,y)）
   #          a：状態s でとる行動a（＝移動ﾍﾞｸﾄﾙ(Δx,Δy)）
   #          r：状態s で行動a を取った時の状態s'への遷移に伴う報酬Ｒss'a
   #***********************************************************************
-  def getEpisodeAndLearn(self, env, param, epsilon, inTrain):
+  def getEpisode(self, env, epsilon):
     # １回分のｴﾋﾟｿｰﾄﾞの状態遷移の流れをﾘｽﾄで持つ
     episode = []
 
     # 状態s の初期値＝開始点
     s = env.state_ini
 
-    # 初期状態での行動a を方策πに従って選択する
-    a = self.policy[s]
-        
     # 「終端状態」となるまで繰り返す
     while True:
-      
-      # 現在の状態s で、選択した行動a を取り、状態遷移を行う
-      r, s_dash = env.transit(s, a)
+      if np.random.random() < epsilon:
+        # εの割合で、ランダムに行動a を選択する
+        a = self.actions[np.random.randint(len(agent.actions))]
+      else:
+        # 1-εの割合で、決定論的方策πに従って行動a を選択する
+        a = self.policy[s]
 
+      # 現在の状態s で、上記で選択した行動a を取り、状態遷移を行う
+      r, s_dash = env.transit(s, a)
+      
       # ｴﾋﾟｿｰﾄﾞへ状態遷移情報を追加する
       episode.append((s, a, r))
-
-      # 遷移先の状態s' (s_dash) でとる行動a' (a_dash) を決定する
-      a_dash = self.policy[s_dash]
-
-      # 学習中の場合、
-      # 行動価値関数Ｑπ(s,a)をＴＤ(0)法により推定して、
-      # 方策πの改善を行う
-      if inTrain:
-        self.q[(s, a)] += param.alpha * (r + (param.gamma * self.q[(s_dash, a_dash)]) - self.q[(s, a)])
-        self.updatePolicy(s)
-
+      
       # 状態遷移で終点に着いたら「終端状態」となるので、本ｴﾋﾟｿｰﾄﾞは終了する
       x, y = s_dash
       if env.cliff[y][x] == 'G':
         break
 
-      # 状態s と取る行動a を更新
-      a = a_dash
+      # 状態s を更新
       s = s_dash
 
     return episode
@@ -165,8 +158,6 @@ class Agent:
   #-----------------------------------------------------------------------
   # 引数：
   #   s    ： 現在の状態s (＝位置座標(x,y))
-  #-----------------------------------------------------------------------
-  # (※) 実装はﾓﾝﾃｶﾙﾛ法とおなじ
   #***********************************************************************
   def updatePolicy(self, s):
     q_max = -10**10
@@ -181,7 +172,8 @@ class Agent:
   #***********************************************************************
   # Agent ｸﾗｽ : train
   # ｼﾐｭﾚｰｼｮﾝにより、
-  # ｴﾋﾟｿｰﾄﾞ取得回数が指定回数 "episodeNum" に達するまで、
+  # ε-greedy法のﾊﾟﾗﾒｰﾀεを、ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀの現象率で徐々に減少させ、
+  # ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀの指定値より小さくなったら学習を終了するまで、
   # ｴﾋﾟｿｰﾄﾞを取得し、状態価値関数Ｖπ(s) を見積もる。
   #-----------------------------------------------------------------------
   # 引数：
@@ -191,24 +183,80 @@ class Agent:
   # 戻り値：
   # (第１返値) episode_lengths: 
   #      1ｴﾋﾟｿｰﾄﾞ毎の状態遷移数を要素とするﾘｽﾄ型で保持し、その履歴とする
-  #-----------------------------------------------------------------------
-  # (※) 実装はﾓﾝﾃｶﾙﾛ法と全く異なる
   #***********************************************************************
   def train(self, env, param):
     # 経過時間測定開始
     t1 = time.time()
 
-    # 指定回数分、ｴﾋﾟｿｰﾄﾞ取得と学習を繰り返す
+    # 1ｴﾋﾟｿｰﾄﾞ毎の状態遷移数の履歴をﾘｽﾄ型で保持する
     episode_lengths = []
+
+    # ε-greedy法のﾊﾟﾗﾒｰﾀεの初期化
+    epsilon = param.eps_First
+
+    # ε-greedy法のﾊﾟﾗﾒｰﾀεを徐々に減少させながら、
+    # ｴﾋﾟｿｰﾄﾞの取得とそれによる方策改善を繰り返す
     seqNo = 0
-    for _ in range(param.episodeNum):
+    while True:
       seqNo += 1
-      episode = self.getEpisodeAndLearn(env, param, param.eps_Train, True)
+
+      # 1回分のｴﾋﾟｿｰﾄﾞを取得
+      episode = self.getEpisode(env, epsilon)
+
+      # 1回分のｴﾋﾟｿｰﾄﾞでの状態遷移数を追加
       episode_lengths.append(len(episode))
+
+      # 各状態s での決定論的方策π(s)のｵﾝﾎﾟﾘｼｰの範囲を確認するために
+      # 終端から開始点に向かって参照できるように逆順にする
+      episode.reverse()
+
+      # 終端から開始点に向かって状態遷移情報を参照し、
+      # 各状態s での決定論的方策π(s)のｵﾝﾎﾟﾘｼｰの範囲内の状態遷移情報で、
+      # 以下の一連の処理で方策改善を行う
+
+      # total_r は最終値は総報酬であるが、各状態s での総報酬にもなる
+      total_r = 0
       
-      # 1ｴﾋﾟｿｰﾄﾞ分の足跡を表示する
-      if(param.trace == True):
-        print("train: episode seqNo={0}".format(seqNo))
+      last = False
+      for (s, a, r) in episode:
+
+        # 行動a が状態s での方策π(s)でなかったら
+        # 本ｴﾋﾟｿｰﾄﾞによる方策改善で、残りの状態遷移を遡って参照することはしない。
+        # 最後に参照する状態遷移情報は、
+        # ε-greedy法によりεの割合で既存の方策πでない方策π'での行動a' 
+        # を取ったことによる状態遷移情報
+        if a != self.policy[s]:
+          last = True
+
+        # 各状態(s, a)での総報酬を更新
+        total_r += r
+      
+        # 状態(s, a)への訪問回数を更新する
+        self.n[(s, a)] += 1
+
+        # 状態s の行動価値関数Ｑπ(s,a) を報酬Ｒss'a の総和の平均値として算出する
+        self.q[(s, a)] += (total_r - self.q[(s, a)]) / self.n[(s, a)]
+
+        # 状態s での方策を改善する
+        self.updatePolicy(s)
+
+        # 残りの状態遷移がｵﾝﾎﾟﾘｼｰの範囲内でなくなったら終了
+        if last:
+          break
+
+      # ε-greedy法のﾊﾟﾗﾒｰﾀεを、ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀの現象率で徐々に減少させ、
+      # ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀの指定値より小さくなったら学習を終了する
+      epsilon *= param.eps_Rate
+      if epsilon < param.eps_Last:
+        # 方策改善最後の1ｴﾋﾟｿｰﾄﾞ分の足跡を、表示する
+        if(param.trace == True):
+          print("\ntrain: last episode seqNo={0}".format(seqNo))
+          showFootprint(self, env, episode)
+        break
+
+      # 1ｴﾋﾟｿｰﾄﾞ分の足跡を、100回ごとに表示する
+      if(param.trace == True) and (seqNo % 100 == 0):
+        print("\ntrain: episode seqNo={0}".format(seqNo))
         showFootprint(self, env, episode)
 
     # 経過時間を表示する
@@ -227,12 +275,11 @@ class Agent:
   #-----------------------------------------------------------------------
   # 戻り値：
   # (第１返値) episode: 1ｴﾋﾟｿｰﾄﾞ分の状態遷移
-  #-----------------------------------------------------------------------
-  # (※) 実装にﾓﾝﾃｶﾙﾛ法と相違あり
   #***********************************************************************
   def run(self, env, param):
-    # getEpisodeAndLearn 関数を、ε=実行時の値、inTrain=False で実行
-    episode = self.getEpisodeAndLearn(env, param, param.eps_Run, False)
+
+    # getEpisode 関数を、実行時のεで実行
+    episode = self.getEpisode(env, param.eps_Run)
     return episode
 
 
@@ -243,12 +290,11 @@ class Agent:
 #-------------------------------------------------------------------------
 # (1) ﾊｲﾊﾟｰﾊﾟﾗﾒｰﾀを設定
 #-------------------------------------------------------------------------
-alpha = 0.2
-gamma = 1
-eps_Train = 0.1
+eps_First = 0.9
+eps_Last = 0.01
+eps_Rate = 0.999
 eps_Run = 0.001
-episodeNum = 4500
-param = HyperParam(alpha, gamma, eps_Train, eps_Run, episodeNum, False)
+param = HyperParam(eps_First, eps_Last, eps_Rate, eps_Run, False)
 
 #-------------------------------------------------------------------------
 # (2) 環境のｲﾝｽﾀﾝｽを作成
@@ -264,7 +310,7 @@ for rii in range(0,100):
   # Agent ｸﾗｽのｲﾝｽﾀﾝｽを作成する
   agent = Agent(env)
 
-  # SARSA で方策πを学習する
+  # ﾓﾝﾃｶﾙﾛ法で方策πを学習する
   param.trace = False
   episode_lengths = agent.train(env, param)
 

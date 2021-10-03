@@ -2,75 +2,94 @@
 # （ﾘｽﾄ 02-(03)-1）
 #  様々な活性化関数
 #*************************************************************************
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
 
-# RelU
-def fRelU(xlist):
-    ylist = np.zeros(xlist.size)
-    for i in range(xlist.size):
-        ylist[i] = max(0.0, xlist[i])
-    return  ylist
+#(1) ｼｸﾞﾓｲﾄﾞ関数
+def f_sigmoid(x):
+    return 1 / ( 1 + np.exp(-x) )
 
-# Relu6
-def fRelU6(xlist):
-    ylist = np.zeros(xlist.size)
-    for i in range(xlist.size):
-        ylist[i] = min(max(0.0, xlist[i]), 6.0)
-    return  ylist
+#(2) ﾊｲﾊﾟﾎﾞﾘｯｸﾀﾝｼﾞｪﾝﾄ（双曲線正接関数）
+def f_tanh(x):
+    return  (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
 
-# sigmoid
-def fSigmoid(xlist):
-    return 1.0 / (1 + np.exp(-1.0 * xlist))
+#(3) ソフトサイン関数
+def f_softsign(x):
+    return  x / (np.abs(x) + 1)
 
-# tanh
-def fTanh(xlist):
-    return (np.exp(xlist) - np.exp(-xlist)) \
-         / (np.exp(xlist) + np.exp(-xlist))
+#(4) 正規化線形関数（ランプ関数)
+def f_ReLU(x):
+    xcnt = len(x)
+    ylist = np.zeros(xcnt)
+    for ii in range(xcnt):
+        if x[ii] < 0:
+            ylist[ii] = 0
+        else:
+            ylist[ii] = x[ii]
+    return ylist
 
-# softsign
-def fSoftsign(xlist):
-    return xlist / (abs(xlist) + 1.0)
+#(6) 正規化線形関数（ランプ関数、上限＝6）
+def f_ReLU6(x):
+    xcnt = len(x)
+    ylist = np.zeros(xcnt)
+    for ii in range(xcnt):
+        if x[ii] < 0:
+            ylist[ii] = 0
+        elif x[ii] > 6:
+            ylist[ii] = 6
+        else:
+            ylist[ii] = xlist[ii]
+    return ylist
 
-# softplus
-def fSoftplus(xlist):
-    return np.log(np.exp(xlist) + 1.0)
+#(7) ソフトプラス関数
+def  f_softplus(x):
+    return  np.log(np.exp(x) + 1)
 
-# ELU
-def fELU(xlist, alpha):
-    return np.where(xlist>0.0, xlist, alpha*(np.exp(xlist) - 1))
+#(8) Exponential Linear Unit
+def  f_ELU(x):
+    xcnt = len(x)
+    ylist = np.zeros(xcnt)
+    for ii in range(xcnt):
+        if x[ii] < 0:
+            ylist[ii] = np.exp(x[ii]) -1
+        else:
+            ylist[ii] = x[ii]
+    return ylist
 
+# x データ列
+xlist = np.linspace(-10, 10, 100)
 
-# 定義域
-x_vals = np.linspace(start=-10., stop=10., num=100)
+# y データ列
+y_sigmoid = f_sigmoid(xlist)
+y_tanh = f_tanh(xlist)
+y_softsign = f_softsign(xlist)
+y_ReLU = f_ReLU(xlist)
+y_ReLU6 = f_ReLU6(xlist)
+y_softplus = f_softplus(xlist)
+y_ELU = f_ELU(xlist)
+    
+# グラフ表示
+plt.figure(figsize=(14,5))
+plt.subplots_adjust(wspace=0.2, hspace=0.5)
 
-# 関数値
-y_relu = fRelU(x_vals)
-y_relu6 = fRelU6(x_vals)
-y_sigmoid = fSigmoid(x_vals)
-y_tanh = fTanh(x_vals)
-y_softsign = fSoftsign(x_vals)
-y_softplus = fSoftplus(x_vals)
-y_elu = fELU(x_vals,1.0)
-
-# ｸﾞﾗﾌ表示１
-plt.plot(x_vals, y_sigmoid, 'r--', label='1.sigmoid', linewidth=2)
-plt.plot(x_vals, y_tanh, 'b:', label='2.tanh', linewidth=2)
-plt.plot(x_vals, y_softsign, 'g-.', label='3.softsign', linewidth=2)
-plt.ylim([-2,2])
+plt.subplot(1,3,1)
+plt.plot(xlist, y_sigmoid, 'r--', label='1.Sigmoid', linewidth=2)
+plt.plot(xlist, y_tanh, 'b:', label='2.Tanh', linewidth=2)
+plt.plot(xlist, y_softsign, 'g-.', label='3.Softsign', linewidth=2)
+plt.ylim([-2,7])
 plt.legend(loc='upper left')
-plt.show()
 
-# ｸﾞﾗﾌ表示２
-plt.plot(x_vals, y_relu, 'b:', label='4.ReLU', linewidth=2)
-plt.plot(x_vals, y_elu, 'k-', label='8.ELU', linewidth=0.5)
-plt.ylim([-1.5,7])
+plt.subplot(1,3,2)
+plt.plot(xlist, y_ReLU, 'b:', label='4.ReLU', linewidth=2)
+plt.plot(xlist, y_softplus, 'r--', label='7.Softplus', linewidth=2)
+plt.ylim([-2,7])
 plt.legend(loc='upper left')
-plt.show()
 
-# ｸﾞﾗﾌ表示３
-plt.plot(x_vals, y_relu6, 'g-.', label='6.ReLU6', linewidth=2)
-plt.plot(x_vals, y_softplus, 'r--', label='7.softplus', linewidth=2)
-plt.ylim([-1.5,7])
+plt.subplot(1,3,3)
+plt.plot(xlist, y_ReLU6, 'g-.', label='6.ReLU6', linewidth=2)
+plt.plot(xlist, y_ELU, 'k-', label='8.ELU', linewidth=0.5)
+plt.ylim([-2,7])
 plt.legend(loc='upper left')
+
 plt.show()

@@ -1,0 +1,35 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-8_指数分布(λ=1.0)
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 指数分布関数
+def shisuBunpu(xarray, lambdaval):
+    ylist = []
+    for x in xarray :
+        if x <= 0 :
+            ylist.append(0)
+        else:
+            ylist.append(lambdaval * np.exp(-lambdaval * x))
+    return ylist
+
+# データとグリッド
+xn = 100
+xlist = np.linspace(-0.5, 4, xn)
+lambdaval1 = 1.0
+ylist1 = shisuBunpu(xlist, lambdaval1)
+
+# グラフ描画
+plt.figure(figsize=(8,4))
+plt.plot( xlist, ylist1, 'cornflowerblue', linewidth=3, label='lambda * exp(-lambda * x)\nlambda=1.0' )
+plt.title('Exponantial Distribution')
+plt.legend(loc='lower right')
+plt.ylim(-0.25, 1.25)
+plt.xlim(-0.5, 4)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()

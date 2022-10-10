@@ -1,0 +1,39 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-7_対数正規分布(μ=0,σ=1)
+#*************************************************
+# 対数正規分布
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 対数正規分布関数
+def logNormalDistribution(xlist, mu, sigma):
+    ylist = []
+    for x in xlist:
+        if x <= 0:
+            ylist.append(0.0)
+        else:
+            ylist.append(
+                1 / (np.sqrt(2 * np.pi) * sigma * x)\
+                * np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2)) )
+    return ylist
+
+# データとグリッド
+xn = 100
+xlist = np.linspace(-0.5, 7, xn)
+mu = 0
+sigma = 1
+
+# グラフ描画
+plt.figure(figsize=(8,4))
+plt.plot( xlist, logNormalDistribution(xlist, mu, sigma), 'cornflowerblue', linewidth=3,\
+         label='y=1/(sqrt(2pai)*sigma*x) * exp(-(ln(x)-mu)**2/(2*sigma**2))' )
+plt.title('Log Normal Distribution  (mu=0, sigma=1)')
+plt.legend(loc='lower right')
+plt.ylim(-0.1, 0.7)
+plt.xlim(-0.5, 7)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()

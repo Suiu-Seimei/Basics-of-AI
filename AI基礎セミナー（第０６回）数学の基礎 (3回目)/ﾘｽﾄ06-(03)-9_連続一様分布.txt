@@ -1,0 +1,34 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-9_連続一様分布
+#*************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 確率密度関数
+def fContUniformDist(xList, rangeStart, rangeEnd):
+    yList = []
+    hConst = 1 / (rangeEnd - rangeStart)
+    for x in xList:
+        if (x < rangeStart) or (rangeEnd < x):
+            yList.append(0.0)
+        else:
+            yList.append(hConst)
+    return yList
+
+# データとグリッド
+Xn = 100
+xList = np.linspace(-4, 4, Xn)
+
+# グラフ描画
+plt.figure(figsize=(8,4))
+plt.plot( xList, fContUniformDist(xList, -2.5, 2.5), 'cornflowerblue', linewidth=3, label='1/5' )
+plt.title('Continuous Uniform Distribution (x<-2.5:0, +2.5<x:0)')
+plt.legend(loc='lower right')
+plt.ylim(-0.1, 0.3)
+plt.xlim(-4, 4)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()

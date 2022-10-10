@@ -21,7 +21,7 @@ sigma = 1
 # ƒOƒ‰ƒt•`‰æ
 plt.figure(figsize=(8,4))
 plt.plot( xlist, gauss(xlist, mu, sigma), 'cornflowerblue', linewidth=3,\
-         label='y=1/(sqrt(2pai)*sigma) * exp(-(x-mu)**2/2*sigma)\ny=1/sqrt(2pai) * exp(-z**2/2)' )
+         label='y=1/(sqrt(2pai)*sigma) * exp(-(x-mu)**2/2*sigma**2)' )
 plt.title('Standard Normal Distribution  (mu=0, sigma=1)')
 plt.legend(loc='lower right')
 plt.ylim(-0.1, 0.5)

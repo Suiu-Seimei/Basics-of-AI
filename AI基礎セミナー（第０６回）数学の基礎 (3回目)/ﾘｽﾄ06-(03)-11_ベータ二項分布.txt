@@ -1,0 +1,112 @@
+#***************************************************************************
+# ﾘｽﾄ06-(03)-11_ベータ二項分布
+#***************************************************************************
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+from scipy import integrate #積分計算用
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+#***************************************************************************
+# fCombinaton
+# 組合せ nCr の計算
+#---------------------------------------------------------------------------
+# 引数：
+#   n  (0以上の整数)：組合せ nCr の n
+#   r  (0以上の整数)：組合せ nCr の r
+#---------------------------------------------------------------------------
+# 戻り値：
+#   組合せ nCr の値
+#***************************************************************************
+def fCombinaton(n, r):
+    return  math.factorial(n) // \
+           (math.factorial(n - r) * math.factorial(r))
+
+#***************************************************************************
+# fBetaBinomialDist
+# ベータ二項関数の確率質量関数
+#---------------------------------------------------------------------------
+# 引数：
+#   n      (整数)：試行回数 (n>=0)
+#   args   (実数のタプル)：ベータ関数の係数 ([0]:a, [1]:b)
+#---------------------------------------------------------------------------
+# 戻り値：
+#   xList (リスト)：試行回数の整数リスト
+#   yList (リスト)：ベータ関数の計算結果の実数リスト
+#***************************************************************************
+def fBetaBinomialDist(n, args):
+
+    # ベータ関数の被積分関数のラムダ式
+    betaFunc = lambda x, a, b: x**(a - 1.0) * (1.0 - x)**(b - 1.0)
+
+    # ベータ二項分布の分母部分計算 B(a,b)
+    betaBunbo, betaErr1 = integrate.quad(betaFunc, 0.0, 1.0, args)
+
+    # 計算範囲
+    xList = [i for i in range(0, n+1)]
+
+    # 値 xList のベータ関数値リスト
+    yList = []
+    for x in xList:
+        # ベータ二項分布の分子部分計算 B(a+x,b+n-x)
+        args2 = (args[0]+x, args[1]+n-x,)
+        betaBunshi, betaErr2 = integrate.quad(betaFunc, 0.0, 1.0, args2)
+        
+        # ベータ二項分布
+        y = fCombinaton(n,x) * betaBunshi / betaBunbo
+        yList.append(y)
+    return xList, yList
+
+#***************************************************************************
+# 本計算
+#***************************************************************************
+# ベータ関数の定義域
+n = 10               #試行回数
+
+#ベータ二項分布 f(x; 3, 9)
+args_28 = (2+1, 8+1)  #ベータ関数の係数 a,b
+xList, yList_28 = fBetaBinomialDist(n, args_28)
+
+#ベータ二項分布 f(x; 9, 3)
+args_82 = (8+1, 2+1)  #ベータ関数の係数 a,b
+xList, yList_82 = fBetaBinomialDist(n, args_82)
+
+#ベータ二項分布 f(x; 6, 6)
+args_55 = (5+1, 5+1)  #ベータ関数の係数 a,b
+xList, yList_55 = fBetaBinomialDist(n, args_55)
+
+#ベータ二項分布 f(x; 1, 1)
+args_00 = (0+1, 0+1)  #ベータ関数の係数 a,b
+xList, yList_00 = fBetaBinomialDist(n, args_00)
+
+# グラフ描画
+plt.figure(figsize=(8,4))
+
+label_28 = "a={0}, b={1}".format(args_28[0], args_28[1])
+label_82 = "a={0}, b={1}".format(args_82[0], args_82[1])
+label_55 = "a={0}, b={1}".format(args_55[0], args_55[1])
+label_00 = "a={0}, b={1}".format(args_00[0], args_00[1])
+
+# 折れ線グラフ表示
+plt.plot( xList, yList_28, 'red', linestyle="solid", linewidth=3, label=label_28)
+plt.plot( xList, yList_82, 'green', linestyle="dotted", linewidth=3, label=label_82)
+plt.plot( xList, yList_55, 'cornflowerblue', linestyle="dashed", linewidth=3, label=label_55)
+plt.plot( xList, yList_00, 'gray', linestyle="dashdot", linewidth=3, label=label_00)
+
+# 棒グラフ表示
+barWidth = 0.05
+for i in range(0, n+1):
+    plt.bar( xList[i] - barWidth*1, yList_28[i], color='red', align="edge", width=barWidth)
+    plt.bar( xList[i] - barWidth*0, yList_82[i], color='green', align="edge", width=barWidth)
+    plt.bar( xList[i] + barWidth*1, yList_55[i], color='cornflowerblue', align="edge", width=barWidth)
+    plt.bar( xList[i] + barWidth*2, yList_00[i], color='gray', align="edge", width=barWidth)
+
+plt.title("Beta Binomal Distribution (n={0})".format(n))
+plt.legend(loc='upper right')
+plt.ylim(-0.05, 0.4)
+plt.xlim(0 - 0.5, n + 0.5)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()

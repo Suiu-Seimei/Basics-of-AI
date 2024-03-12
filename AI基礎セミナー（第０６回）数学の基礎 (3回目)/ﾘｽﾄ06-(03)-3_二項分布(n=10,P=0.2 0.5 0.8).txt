@@ -1,0 +1,62 @@
+#*************************************************
+# ﾘｽﾄ06-(03)-3_二項分布(n=10,P=0.2 0.5 0.8)
+#*************************************************
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+# 二項分布の確率質量関数
+def fBinominal(n, p, k):
+    return fCombinaton(n,k) * ((p)**k) * ((1-p)**(n-k))
+
+# 組合せ nCr
+def fCombinaton(n, r):
+    return  math.factorial(n) // \
+           (math.factorial(n - r) * math.factorial(r))
+
+# パラメータに応じた分布計算
+n = 10
+p1 = 0.2
+p2 = 0.5
+p3 = 0.8
+Xlist = range(n+1)
+Llist = range(n+1)
+Plist1 = []
+Plist2 = []
+Plist3 = []
+for x in Xlist:
+    Plist1.append( fBinominal(n, p1, x) )
+for x in Xlist:
+    Plist2.append( fBinominal(n, p2, x) )
+for x in Xlist:
+    Plist3.append( fBinominal(n, p3, x) )
+
+# グラフ描画
+plt.figure(figsize=(8,4))
+
+label_28 = '(n={0}, p={1})'.format(n, p1)
+label_55 = '(n={0}, p={1})'.format(n, p2)
+label_82 = '(n={0}, p={1})'.format(n, p3)
+
+# 折れ線グラフ表示
+plt.plot( Xlist, Plist1, 'red', linestyle="solid", linewidth=3, label=label_28)
+plt.plot( Xlist, Plist3, 'green', linestyle="dotted", linewidth=3, label=label_82)
+plt.plot( Xlist, Plist2, 'cornflowerblue', linestyle="dashed", linewidth=3, label=label_55)
+
+# 棒グラフ表示
+barWidth = 0.05
+for i in range(0, n+1):
+    plt.bar( Xlist[i] - barWidth*1, Plist1[i], color='red', align="edge", width=barWidth)
+    plt.bar( Xlist[i] - barWidth*0, Plist3[i], color='green', align="edge", width=barWidth)
+    plt.bar( Xlist[i] + barWidth*1, Plist2[i], color='cornflowerblue', align="edge", width=barWidth)
+
+plt.title("Binomal Distribution (n={0})".format(n))
+plt.legend(loc='upper right')
+plt.ylim(-0.05, 0.4)
+plt.xlim(0 - 0.5, n + 0.5)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()

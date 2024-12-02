@@ -1,0 +1,87 @@
+#***************************************************************************
+# ﾘｽﾄ06-(03)-10_ベータ分布
+#***************************************************************************
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import integrate #積分計算用
+from mpl_toolkits.mplot3d import Axes3D
+%matplotlib inline
+
+#***************************************************************************
+# fBetaDist
+# ベータ関数の確率密度関数
+#---------------------------------------------------------------------------
+# 引数：
+#   xStart (実数)：積分区間の下端
+#   xEnd   (実数)：積分区間の上端
+#   xN     (整数)：計算範囲の分割数
+#   args   (実数のタプル)：ベータ関数の係数 ([0]:a, [1]:b)
+#---------------------------------------------------------------------------
+# 戻り値：
+#   xList (リスト)：ベータ関数の計算範囲リスト
+#   yList (リスト)：ベータ関数の計算結果リスト
+#***************************************************************************
+def fBetaDist(xStart, xEnd, xN, args):
+
+    # ベータ関数の被積分関数のラムダ式
+    betaFunc = lambda x, a, b: x**(a - 1.0) * (1.0 - x)**(b - 1.0)
+
+    # ベータ分布の分母計算
+    betaBunbo, betaErr = integrate.quad(betaFunc, xStart, xEnd, args)
+
+    # 計算範囲
+    xList = np.linspace(xStart, xEnd, xN)
+
+    # 値 xList のベータ関数値リスト
+    yList = []
+    for x in xList:
+        if (x < 0) or (1 < x) :
+            y = 0.0
+        else:
+            y = betaFunc(x, args[0], args[1]) / betaBunbo
+        yList.append(y)
+    return xList, yList
+
+#***************************************************************************
+# 本計算
+#***************************************************************************
+# ベータ関数の定義域
+XrangeStart = 0.0    #積分区間の下端
+XrangeEnd = 1.0      #積分区間の上端
+Xn = 100             #計算範囲の分割数
+XrangeWidth = XrangeEnd - XrangeStart
+
+#ベータ分布 f(x; 3, 9)
+args_28 = (2+1, 8+1,)  #ベータ関数の係数 a,b
+xList_28, yList_28 = fBetaDist(XrangeStart, XrangeEnd, Xn, args_28)
+
+#ベータ分布 f(x; 9, 3)
+args_82 = (8+1, 2+1,)  #ベータ関数の係数 a,b
+xList_82, yList_82 = fBetaDist(XrangeStart, XrangeEnd, Xn, args_82)
+
+#ベータ分布 f(x; 6, 6)
+args_55 = (5+1, 5+1,)  #ベータ関数の係数 a,b
+xList_55, yList_55 = fBetaDist(XrangeStart, XrangeEnd, Xn, args_55)
+
+#ベータ分布 f(x; 1, 1)
+args_00 = (0+1, 0+1,)  #ベータ関数の係数 a,b
+xList_00, yList_00 = fBetaDist(XrangeStart, XrangeEnd, Xn, args_00)
+
+# グラフ描画
+label_28 = "a={0}, b={1}".format(args_28[0], args_28[1])
+label_82 = "a={0}, b={1}".format(args_82[0], args_82[1])
+label_55 = "a={0}, b={1}".format(args_55[0], args_55[1])
+label_00 = "a={0}, b={1}".format(args_00[0], args_00[1])
+plt.figure(figsize=(8,4))
+plt.plot( xList_28, yList_28, 'red', linestyle="solid", linewidth=3, label=label_28)
+plt.plot( xList_82, yList_82, 'green', linestyle="dotted", linewidth=3, label=label_82)
+plt.plot( xList_55, yList_55, 'cornflowerblue', linestyle="dashed", linewidth=3, label=label_55)
+plt.plot( xList_00, yList_00, 'gray', linestyle="dashdot", linewidth=3, label=label_00)
+plt.title("Beta Distribution")
+plt.legend(loc='upper right')
+plt.ylim(-0.1, 5)
+plt.xlim(XrangeStart - 0.01*XrangeWidth, XrangeEnd + 0.01*XrangeWidth)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.grid(True)
+plt.show()
